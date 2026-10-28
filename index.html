@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TeklifBul - Hizmet Bul, Teklif Ver</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f7fb;color:#17243b}
+header{background:#1457c5;color:white;padding:22px 18px}
+header h1{margin:0;font-size:29px}
+header p{margin:8px 0 0}
+main{max-width:900px;margin:auto;padding:16px}
+.card{background:white;padding:20px;border-radius:15px;margin:15px 0;box-shadow:0 2px 12px #0001}
+h2{margin-top:0}
+input,select,textarea{width:100%;padding:13px;margin:7px 0 14px;border:1px solid #cbd5e1;border-radius:9px;font:inherit}
+textarea{min-height:90px}
+button{background:#1457c5;color:white;border:0;border-radius:9px;padding:13px 18px;font-size:16px;cursor:pointer}
+button:disabled{background:#999}
+.tag{display:inline-block;background:#e6f0ff;padding:6px 10px;border-radius:20px;font-size:13px}
+.job{border:1px solid #ddd;border-radius:12px;padding:15px;margin:12px 0}
+.job h3{margin:0 0 8px}
+small{color:#64748b}
+.notice{background:#fff4d5;padding:12px;border-radius:8px}
+</style>
+</head>
+<body>
+<header><h1>TeklifBul</h1><p>Hizmet arayan ücretsiz ilan verir. Hizmet veren teklif sunar.</p></header>
+<main>
+<section class="card">
+<h2>Ücretsiz Hizmet Talebi Oluştur</h2>
+<form id="form">
+<label>Hizmet kategorisi</label>
+<select id="category" required>
+<option value="">Kategori seç</option>
+<option>Özel Ders</option>
+<option>Boya Badana</option>
+<option>Ev Temizliği</option>
+<option>Elektrik</option>
+<option>Su Tesisatı</option>
+<option>Nakliye</option>
+<option>Tadilat</option>
+<option>Yazılım ve Tasarım</option>
+<option>Diğer</option>
+</select>
+<label>İl / İlçe</label>
+<input id="location" placeholder="Örn: İstanbul / Pendik" required maxlength="100">
+<label>İşin açıklaması</label>
+<textarea id="description" placeholder="Hangi hizmeti istiyorsunuz?" required maxlength="1500"></textarea>
+<label>Tahmini bütçe (isteğe bağlı)</label>
+<input id="budget" placeholder="Örn: 5000 TL" maxlength="80">
+<button type="submit">Ücretsiz İlan Oluştur</button>
+</form>
+</section>
+<section class="card">
+<h2>Açık Hizmet Talepleri</h2>
+<p><small>İlanları görmek ücretsizdir. Teklif göndermek ücretli olacaktır.</small></p>
+<div id="jobs"></div>
+</section>
+<section class="card">
+<h2>Hizmet Verenler İçin</h2>
+<p>İş taleplerini ücretsiz inceleyin. Teklif vermek için ücretli teklif hakkı alın.</p>
+<div class="notice">Demo sürüm: Gerçek ödeme, üyelik ve teklif gönderimi henüz aktif değildir.</div>
+</section>
+</main>
+<script>
+const KEY="teklifbul_demo_jobs";
+const samples=[
+{category:"Özel Ders",location:"İstanbul / Pendik",description:"8. sınıf matematik, haftada iki gün.",budget:"800 TL / ders"},
+{category:"Boya Badana",location:"İstanbul / Kartal",description:"3+1 boş daire, duvar ve tavan boyası.",budget:"Belirtilmedi"}
+];
+let jobs;
+try{jobs=JSON.parse(localStorage.getItem(KEY))||samples}catch(e){jobs=samples}
+function render(){
+const root=document.getElementById("jobs");
+root.replaceChildren();
+jobs.forEach((job)=>{
+const box=document.createElement("div");
+box.className="job";
+const h=document.createElement("h3");
+h.textContent=job.category;
+const loc=document.createElement("p");
+loc.textContent="Konum: "+job.location;
+const desc=document.createElement("p");
+desc.textContent=job.description;
+const budget=document.createElement("p");
+budget.textContent="Bütçe: "+(job.budget||"Belirtilmedi");
+const btn=document.createElement("button");
+btn.textContent="Teklif Ver";
+btn.onclick=()=>alert("Teklif verme ve ödeme sistemi sonraki aşamada eklenecek.");
+box.append(h,loc,desc,budget,btn);
+root.append(box);
+});
+}
+document.getElementById("form").addEventListener("submit",function(e){
+e.preventDefault();
+const job={
+category:document.getElementById("category").value,
+location:document.getElementById("location").value.trim(),
+description:document.getElementById("description").value.trim(),
+budget:document.getElementById("budget").value.trim()
+};
+if(!job.location||!job.description)return;
+jobs.unshift(job);
+try{localStorage.setItem(KEY,JSON.stringify(jobs))}catch(e){}
+render();
+this.reset();
+alert("Demo ilan oluşturuldu. Yalnızca bu tarayıcıda saklandı.");
+});
+render();
+</script>
+</body>
+</html>
