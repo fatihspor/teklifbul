@@ -63,8 +63,13 @@ small{color:#64748b}
 <option>Temizlik / İnşaat Sonrası</option>
 </optgroup>
 </select>
-<label>İl / İlçe</label>
-<input id="location" placeholder="Örn: İstanbul / Pendik" required maxlength="100">
+<label for="province">İl</label>
+<select id="province" required><option value="">İl seçin</option></select>
+<label for="district">İlçe</label>
+<select id="district" required disabled><option value="">Önce il seçin</option></select>
+<label for="neighborhood">Mahalle</label>
+<select id="neighborhood" required disabled><option value="">Önce ilçe seçin</option></select>
+<p id="addressStatus"><small>Adres listesi yükleniyor...</small></p>
 <label>İşin açıklaması</label>
 <textarea id="description" placeholder="Hangi hizmeti istiyorsunuz?" required maxlength="1500"></textarea>
 <label>Tahmini bütçe (isteğe bağlı)</label>
@@ -84,6 +89,35 @@ small{color:#64748b}
 </section>
 </main>
 <script>
+const ADDRESS_URL="https://raw.githubusercontent.com/cyaxaress/turkiye-il-ilce-mah/main/PTT/ptt_il_ilce_mahalle.json";
+let addressData=[];
+const provinceEl=document.getElementById("province");
+const districtEl=document.getElementById("district");
+const neighborhoodEl=document.getElementById("neighborhood");
+function setOptions(el,items,placeholder){
+el.replaceChildren(new Option(placeholder,""));
+items.forEach(item=>el.add(new Option(item.name,item.value)));
+el.disabled=!items.length;
+}
+fetch(ADDRESS_URL).then(r=>{if(!r.ok)throw Error("Adres verisi alınamadı");return r.json()}).then(data=>{
+addressData=Array.isArray(data)?data:(Array.isArray(data.data)?data.data:[]);
+if(!addressData.length)throw Error("Adres verisi boş");
+setOptions(provinceEl,addressData.map(p=>({name:p.il_adi,value:p.il_slug})).sort((a,b)=>a.name.localeCompare(b.name,"tr")),"İl seçin");
+document.getElementById("addressStatus").textContent="";
+}).catch(()=>{
+document.getElementById("addressStatus").textContent="Adres listesi yüklenemedi. İnternet bağlantınızı kontrol edip sayfayı yenileyin.";
+});
+provinceEl.addEventListener("change",()=>{
+const province=addressData.find(p=>p.il_slug===provinceEl.value);
+setOptions(districtEl,(province?.ilceler||[]).map(d=>({name:d.ilce_adi,value:d.ilce_slug})).sort((a,b)=>a.name.localeCompare(b.name,"tr")),"İlçe seçin");
+setOptions(neighborhoodEl,[],"Önce ilçe seçin");
+});
+districtEl.addEventListener("change",()=>{
+const province=addressData.find(p=>p.il_slug===provinceEl.value);
+const district=province?.ilceler?.find(d=>d.ilce_slug===districtEl.value);
+const names=[...new Set((district?.mahalleler||[]).map(m=>m.mahalle_adi).filter(Boolean))];
+setOptions(neighborhoodEl,names.sort((a,b)=>a.localeCompare(b,"tr")).map(name=>({name,value:name})),"Mahalle seçin");
+});
 const KEY="teklifbul_demo_jobs";
 const OFFER_KEY="teklifbul_demo_offers";
 let offers={};
@@ -143,11 +177,11 @@ document.getElementById("form").addEventListener("submit",function(e){
 e.preventDefault();
 const job={
 category:document.getElementById("category").value,
-location:document.getElementById("location").value.trim(),
+location:[provinceEl.selectedOptions[0]?.text,districtEl.selectedOptions[0]?.text,neighborhoodEl.value].join(" / "),
 description:document.getElementById("description").value.trim(),
 budget:document.getElementById("budget").value.trim()
 };
-if(!job.location||!job.description)return;
+if(!provinceEl.value||!districtEl.value||!neighborhoodEl.value||!job.description)return;
 jobs.unshift(job);
 const shifted={};
 Object.entries(offers).forEach(([key,value])=>{shifted[String(Number(key)+1)]=value;});
