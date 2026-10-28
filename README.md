@@ -32,3 +32,11 @@ Türkiye genelinde hizmet arayanlarla hizmet verenleri buluşturmayı amaçlayan
 GitHub > Actions > TeklifBul Android APK > son başarılı çalıştırma > Artifacts > TeklifBul-APK.
 
 Debug APK yalnızca test içindir. APK üretim adımının varlığı, iş akışının başarılı çalıştığı anlamına gelmez; Actions durumunu ayrıca doğrulayın.
+
+## Kapalı teklif politikası (ürün kararı)
+- Her ilanın teklif tutarları, açıklamaları ve teklif veren kimlikleri yalnızca ilan sahibi ile ilgili teklifin sahibi tarafından, kendi yetkileri ölçüsünde görüntülenebilir.
+- İlan sahibi tüm teklifleri ve hizmet verenlerin profillerini karşılaştırabilir.
+- Hizmet veren yalnızca kendi teklifini ve ilanın toplam teklif sayısını görür; rakip teklif tutarlarını, ortalamayı, en düşük fiyatı, sıralamayı ve kazanan teklifin bedelini göremez.
+- Teklif seçildikten sonra diğer hizmet verenlere yalnızca ilanın kapandığı bildirilebilir; kazananın kimliği ve tutarı açıklanmaz.
+- Bu kural yalnızca arayüzde gizleme ile değil, veritabanı erişim kuralları / sunucu tarafı yetkilendirmesi ile uygulanmalıdır. Liste API'leri ve bildirimler de rakip tekliflerini sızdırmamalıdır.
+- Platform yöneticileri teklif verilerini yalnızca yetkili destek, güvenlik ve uyuşmazlık çözümü amacıyla, erişim kayıtları tutularak inceleyebilir.
