@@ -43,3 +43,12 @@ Debug APK yalnızca test içindir. APK üretim adımının varlığı, iş akı�
 
 ## Ortak veritabanı hazırlığı
 `supabase/schema.sql` dosyası Google ile kimlik doğrulaması yapılmış kullanıcılar için profiller, ilanlar, teklifler ve satır düzeyinde kapalı teklif erişim kurallarının **ilk taslağını** içerir. Henüz canlı Supabase projesi bağlanmamış, şema uygulanmamış veya güvenlik testleri yapılmamıştır. Bu dosya yayın öncesi erişim kontrolleri, iş durum geçişleri, şikayet/yorum modelleri ve kötüye kullanım testleriyle gözden geçirilmelidir.
+
+## Google girişini etkinleştirme (henüz yapılmadı)
+1. Supabase projesi açın ve `supabase/schema.sql` şemasını güvenlik incelemesinden sonra uygulayın.
+2. Supabase Authentication > Providers > Google üzerinden Google OAuth sağlayıcısını yapılandırın. Google Cloud OAuth istemcisi ve izin verilen yönlendirme adresleri gereklidir.
+3. Supabase Authentication > URL Configuration bölümünde GitHub Pages adresini site/redirect URL olarak ekleyin: `https://fatihspor.github.io/teklifbul/`.
+4. `config.example.js` dosyasını `config.js` adıyla kopyalayıp Supabase proje URL'si ve **public anon/publishable key** bilgilerini girin. Gizli anahtarları GitHub'a koymayın.
+5. Google ile giriş/çıkış, farklı cihazlardan erişim, yetkisiz teklif okuma ve yönlendirme testlerini tamamlayın.
+
+**Not:** `auth.js` yalnızca oturum açma arayüzünü hazırlar. İlan/teklif işlemleri hâlâ demo localStorage kullanır; veritabanına geçiş ve canlı yayın ayrıca yapılmalıdır.
