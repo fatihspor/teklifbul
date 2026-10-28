@@ -10,9 +10,9 @@
   button.type = "button";
   button.textContent = "Google ile giriş yap";
   host.append(button, status);
-  if (!ready) {
+  if (!ready || !config.googleOAuthReady) {
     button.disabled = true;
-    status.textContent = " Google ile üyelik hazırlanıyor. Hizmetleri üyelik olmadan inceleyebilirsiniz.";
+    status.textContent = " Google OAuth ayarı tamamlanınca giriş açılacak. Hizmetleri üyelik olmadan inceleyebilirsiniz.";
     return;
   }
   try {
