@@ -80,11 +80,14 @@ small{color:#64748b}
 <section class="card">
 <h2>Hizmet Verenler İçin</h2>
 <p>İş taleplerini ücretsiz inceleyin. Teklif vermek için ücretli teklif hakkı alın.</p>
-<div class="notice">Demo sürüm: Gerçek ödeme, üyelik ve teklif gönderimi henüz aktif değildir.</div>
+<div class="notice">Demo sürüm: Teklifler yalnızca bu cihazda kaydedilir. Gerçek üyelik, ortak veritabanı ve ödeme henüz aktif değildir.</div>
 </section>
 </main>
 <script>
 const KEY="teklifbul_demo_jobs";
+const OFFER_KEY="teklifbul_demo_offers";
+let offers={};
+try{offers=JSON.parse(localStorage.getItem(OFFER_KEY))||{}}catch(e){offers={}}
 const samples=[
 {category:"Özel Ders",location:"İstanbul / Pendik",description:"8. sınıf matematik, haftada iki gün.",budget:"800 TL / ders"},
 {category:"Boya Badana",location:"İstanbul / Kartal",description:"3+1 boş daire, duvar ve tavan boyası.",budget:"Belirtilmedi"}
@@ -94,7 +97,7 @@ try{jobs=JSON.parse(localStorage.getItem(KEY))||samples}catch(e){jobs=samples}
 function render(){
 const root=document.getElementById("jobs");
 root.replaceChildren();
-jobs.forEach((job)=>{
+jobs.forEach((job,index)=>{
 const box=document.createElement("div");
 box.className="job";
 const h=document.createElement("h3");
@@ -107,8 +110,32 @@ const budget=document.createElement("p");
 budget.textContent="Bütçe: "+(job.budget||"Belirtilmedi");
 const btn=document.createElement("button");
 btn.textContent="Teklif Ver";
-btn.onclick=()=>alert("Teklif verme ve ödeme sistemi sonraki aşamada eklenecek.");
+btn.onclick=()=>{
+const name=prompt("Adınız veya işletme adınız:");
+if(!name||!name.trim())return;
+const price=prompt("Teklif tutarı (TL):");
+if(!price||!/^\d+(?:[.,]\d{1,2})?$/.test(price.trim())||Number(price.replace(",","."))<=0){alert("Geçerli tutar girin.");return;}
+const note=prompt("Teklif açıklaması (isteğe bağlı):")||"";
+const key=String(index);
+if(!Array.isArray(offers[key]))offers[key]=[];
+offers[key].push({name:name.trim().slice(0,80),price:price.trim(),note:note.slice(0,500)});
+try{localStorage.setItem(OFFER_KEY,JSON.stringify(offers))}catch(e){}
+render();
+alert("Demo teklif bu cihazda kaydedildi.");
+};
 box.append(h,loc,desc,budget,btn);
+const submitted=offers[String(index)]||[];
+const count=document.createElement("p");
+count.textContent="Bu cihazdaki teklifler: "+submitted.length;
+box.append(count);
+submitted.forEach(o=>{
+const item=document.createElement("p");
+item.className="tag";
+item.style.display="block";
+item.style.margin="6px 0";
+item.textContent=o.name+" — "+o.price+" TL"+(o.note?" — "+o.note:"");
+box.append(item);
+});
 root.append(box);
 });
 }
@@ -122,6 +149,10 @@ budget:document.getElementById("budget").value.trim()
 };
 if(!job.location||!job.description)return;
 jobs.unshift(job);
+const shifted={};
+Object.entries(offers).forEach(([key,value])=>{shifted[String(Number(key)+1)]=value;});
+offers=shifted;
+try{localStorage.setItem(OFFER_KEY,JSON.stringify(offers))}catch(e){}
 try{localStorage.setItem(KEY,JSON.stringify(jobs))}catch(e){}
 render();
 this.reset();
