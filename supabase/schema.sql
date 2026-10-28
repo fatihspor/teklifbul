@@ -39,23 +39,31 @@ alter table public.jobs enable row level security;
 alter table public.offers enable row level security;
 
 -- Public profiles intentionally expose only display_name and role; avoid storing private contact data here.
+drop policy if exists "Read profiles" on public.profiles;
 create policy "Read profiles" on public.profiles for select to anon,authenticated using (true);
+drop policy if exists "Create own profile" on public.profiles;
 create policy "Create own profile" on public.profiles for insert to authenticated with check (id = (select auth.uid()));
+drop policy if exists "Edit own profile" on public.profiles;
 create policy "Edit own profile" on public.profiles for update to authenticated using (id = (select auth.uid())) with check (id = (select auth.uid()));
 
+drop policy if exists "Browse open jobs or own jobs" on public.jobs;
 create policy "Browse open jobs or own jobs" on public.jobs for select to anon,authenticated
 using (status = 'open' or owner_id = (select auth.uid()));
+drop policy if exists "Post own job" on public.jobs;
 create policy "Post own job" on public.jobs for insert to authenticated
 with check (owner_id = (select auth.uid()) and status = 'open');
+drop policy if exists "Update own job" on public.jobs;
 create policy "Update own job" on public.jobs for update to authenticated
 using (owner_id = (select auth.uid())) with check (owner_id = (select auth.uid()));
 -- Do not grant deletion: preserve records for moderation and audit.
 
 -- A provider sees only their own offer; the job owner sees all offers on their job.
+drop policy if exists "Private offers" on public.offers;
 create policy "Private offers" on public.offers for select to authenticated
 using (provider_id = (select auth.uid()) or exists (
   select 1 from public.jobs j where j.id = job_id and j.owner_id = (select auth.uid())
 ));
+drop policy if exists "Submit own offer to other open job" on public.offers;
 create policy "Submit own offer to other open job" on public.offers for insert to authenticated
 with check (provider_id = (select auth.uid()) and exists (
   select 1 from public.jobs j where j.id = job_id and j.status = 'open' and j.owner_id <> (select auth.uid())
