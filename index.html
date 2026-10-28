@@ -89,34 +89,49 @@ small{color:#64748b}
 </section>
 </main>
 <script>
-const ADDRESS_URL="https://raw.githubusercontent.com/cyaxaress/turkiye-il-ilce-mah/main/PTT/ptt_il_ilce_mahalle.json";
-let addressData=[];
+const ADDRESS_BASE="https://raw.githubusercontent.com/cyaxaress/turkiye-il-ilce-mah/main/PTT/iller/";
 const provinceEl=document.getElementById("province");
 const districtEl=document.getElementById("district");
 const neighborhoodEl=document.getElementById("neighborhood");
+const statusEl=document.getElementById("addressStatus");
 function setOptions(el,items,placeholder){
 el.replaceChildren(new Option(placeholder,""));
 items.forEach(item=>el.add(new Option(item.name,item.value)));
 el.disabled=!items.length;
 }
-fetch(ADDRESS_URL).then(r=>{if(!r.ok)throw Error("Adres verisi alınamadı");return r.json()}).then(data=>{
-addressData=Array.isArray(data)?data:(Array.isArray(data.data)?data.data:[]);
-if(!addressData.length)throw Error("Adres verisi boş");
-setOptions(provinceEl,addressData.map(p=>({name:p.il_adi,value:p.il_slug})).sort((a,b)=>a.name.localeCompare(b.name,"tr")),"İl seçin");
-document.getElementById("addressStatus").textContent="";
-}).catch(()=>{
-document.getElementById("addressStatus").textContent="Adres listesi yüklenemedi. İnternet bağlantınızı kontrol edip sayfayı yenileyin.";
-});
-provinceEl.addEventListener("change",()=>{
-const province=addressData.find(p=>p.il_slug===provinceEl.value);
-setOptions(districtEl,(province?.ilceler||[]).map(d=>({name:d.ilce_adi,value:d.ilce_slug})).sort((a,b)=>a.name.localeCompare(b.name,"tr")),"İlçe seçin");
+async function addressJson(path){
+const r=await fetch(ADDRESS_BASE+path);
+if(!r.ok)throw new Error("Adres verisi yüklenemedi");
+return r.json();
+}
+addressJson("iller.json").then(data=>{
+if(!Array.isArray(data))throw new Error("İl listesi geçersiz");
+setOptions(provinceEl,data.map(p=>({name:p.il_adi,value:p.il_slug})).sort((a,b)=>a.name.localeCompare(b.name,"tr")),"İl seçin");
+statusEl.textContent="";
+}).catch(()=>{statusEl.textContent="İller yüklenemedi. Sayfayı yenileyin.";});
+provinceEl.addEventListener("change",async()=>{
+const slug=provinceEl.value;
+setOptions(districtEl,[],"İlçeler yükleniyor...");
 setOptions(neighborhoodEl,[],"Önce ilçe seçin");
+if(!slug)return;
+try{
+const data=await addressJson(encodeURIComponent(slug)+"/ilceler.json");
+if(provinceEl.value!==slug)return;
+setOptions(districtEl,data.map(d=>({name:d.ilce_adi,value:d.ilce_slug})).sort((a,b)=>a.name.localeCompare(b.name,"tr")),"İlçe seçin");
+statusEl.textContent="";
+}catch(e){statusEl.textContent="İlçeler yüklenemedi. İli yeniden seçin.";}
 });
-districtEl.addEventListener("change",()=>{
-const province=addressData.find(p=>p.il_slug===provinceEl.value);
-const district=province?.ilceler?.find(d=>d.ilce_slug===districtEl.value);
-const names=[...new Set((district?.mahalleler||[]).map(m=>m.mahalle_adi).filter(Boolean))];
+districtEl.addEventListener("change",async()=>{
+const il=provinceEl.value,ilce=districtEl.value;
+setOptions(neighborhoodEl,[],"Mahalleler yükleniyor...");
+if(!il||!ilce)return;
+try{
+const data=await addressJson(encodeURIComponent(il)+"/"+encodeURIComponent(ilce)+"/mahalleler.json");
+if(provinceEl.value!==il||districtEl.value!==ilce)return;
+const names=[...new Set(data.map(m=>m.mahalle_adi).filter(Boolean))];
 setOptions(neighborhoodEl,names.sort((a,b)=>a.localeCompare(b,"tr")).map(name=>({name,value:name})),"Mahalle seçin");
+statusEl.textContent="";
+}catch(e){statusEl.textContent="Mahalleler yüklenemedi. İlçeyi yeniden seçin.";}
 });
 const KEY="teklifbul_demo_jobs";
 const OFFER_KEY="teklifbul_demo_offers";
