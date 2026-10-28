@@ -40,3 +40,6 @@ Debug APK yalnızca test içindir. APK üretim adımının varlığı, iş akı�
 - Teklif seçildikten sonra diğer hizmet verenlere yalnızca ilanın kapandığı bildirilebilir; kazananın kimliği ve tutarı açıklanmaz.
 - Bu kural yalnızca arayüzde gizleme ile değil, veritabanı erişim kuralları / sunucu tarafı yetkilendirmesi ile uygulanmalıdır. Liste API'leri ve bildirimler de rakip tekliflerini sızdırmamalıdır.
 - Platform yöneticileri teklif verilerini yalnızca yetkili destek, güvenlik ve uyuşmazlık çözümü amacıyla, erişim kayıtları tutularak inceleyebilir.
+
+## Ortak veritabanı hazırlığı
+`supabase/schema.sql` dosyası Google ile kimlik doğrulaması yapılmış kullanıcılar için profiller, ilanlar, teklifler ve satır düzeyinde kapalı teklif erişim kurallarının **ilk taslağını** içerir. Henüz canlı Supabase projesi bağlanmamış, şema uygulanmamış veya güvenlik testleri yapılmamıştır. Bu dosya yayın öncesi erişim kontrolleri, iş durum geçişleri, şikayet/yorum modelleri ve kötüye kullanım testleriyle gözden geçirilmelidir.
