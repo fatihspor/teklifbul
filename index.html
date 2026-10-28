@@ -33,15 +33,35 @@ small{color:#64748b}
 <label>Hizmet kategorisi</label>
 <select id="category" required>
 <option value="">Kategori seç</option>
-<option>Özel Ders</option>
-<option>Boya Badana</option>
-<option>Ev Temizliği</option>
-<option>Elektrik</option>
-<option>Su Tesisatı</option>
-<option>Nakliye</option>
-<option>Tadilat</option>
-<option>Yazılım ve Tasarım</option>
-<option>Diğer</option>
+<optgroup label="1. İnşaat">
+<option>İnşaat / Boya Badana</option>
+<option>İnşaat / Tadilat</option>
+<option>İnşaat / Çatı ve İzolasyon</option>
+<option>İnşaat / Fayans ve Seramik</option>
+<option>İnşaat / Diğer</option>
+</optgroup>
+<optgroup label="2. Tesisat">
+<option>Tesisat / Su Tesisatı</option>
+<option>Tesisat / Kalorifer ve Kombi</option>
+<option>Tesisat / Tıkanıklık ve Kaçak</option>
+<option>Tesisat / Diğer</option>
+</optgroup>
+<optgroup label="3. Elektrik">
+<option>Elektrik / Arıza ve Tamirat</option>
+<option>Elektrik / Aydınlatma</option>
+<option>Elektrik / Yeni Tesisat</option>
+<option>Elektrik / Diğer</option>
+</optgroup>
+<optgroup label="4. Özel Ders">
+<option>Özel Ders / Matematik</option>
+<option>Özel Ders / İngilizce</option>
+<option>Özel Ders / Fen ve Diğer Dersler</option>
+</optgroup>
+<optgroup label="5. Temizlik İşleri">
+<option>Temizlik / Ev Temizliği</option>
+<option>Temizlik / Ofis Temizliği</option>
+<option>Temizlik / İnşaat Sonrası</option>
+</optgroup>
 </select>
 <label>İl / İlçe</label>
 <input id="location" placeholder="Örn: İstanbul / Pendik" required maxlength="100">
