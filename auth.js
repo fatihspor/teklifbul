@@ -19,6 +19,7 @@
     const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
     const client = createClient(config.supabaseUrl, config.supabaseAnonKey);
     window.teklifbulSupabase = client;
+    window.dispatchEvent(new Event("teklifbul:client-ready"));
     const refresh = async () => {
       const { data: { user }, error } = await client.auth.getUser();
       if (error || !user) {
@@ -26,6 +27,9 @@
         status.textContent = "";
       } else {
         button.textContent = "Çıkış yap";
+        try {
+          await client.from("profiles").upsert({id:user.id,display_name:(user.user_metadata?.full_name || user.email?.split("@")[0] || "Kullanıcı").slice(0,100)}, {onConflict:"id",ignoreDuplicates:true});
+        } catch (_) { /* login should still work if profile sync fails */ }
         status.textContent = " Giriş yapıldı: " + (user.user_metadata?.full_name || user.email || "Kullanıcı");
       }
     };
