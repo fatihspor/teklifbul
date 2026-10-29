@@ -13,7 +13,7 @@
     const sequence = ++loadSequence;
     const {data, error} = await client.from("jobs").select("id,owner_id,category,province,district,neighborhood,description,budget_note,preferred_date,preferred_time,alternative_date,work_days,created_at,status,selected_offer_id").in("status",["open","awarded","completed"]).order("created_at",{ascending:false}).limit(50);
     if (sequence !== loadSequence) return;
-    if (error) return message("İlanlar yüklenemedi. Lütfen yeniden deneyin.");
+    if (error) { message("İlanlar yüklenemedi. İnternet bağlantınızı kontrol edin."); const retry = el("button", "Tekrar dene"); retry.type = "button"; retry.onclick = () => { retry.disabled = true; void load(); }; root.append(retry); return; }
     root.replaceChildren();
     if (!data.length) root.append(el("p","Henüz açık ilan yok. İlk ilanı siz oluşturabilirsiniz."));
     const {data:{user}} = await client.auth.getUser();
