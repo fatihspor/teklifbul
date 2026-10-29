@@ -97,3 +97,14 @@ jobs:
           echo 'Build log tail:' >> diagnostic.txt
           if [ -f build-log.txt ]; then tail -n 65 build-log.txt >> diagnostic.txt; fi
           gh issue create --title "APK installation diagnostic - run ${GITHUB_RUN_NUMBER}" --body-file diagnostic.txt || true
+
+      - name: Preserve diagnostics even when build fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eUzman-DIAGNOSTICS-${{ github.run_number }}
+          path: |
+            diagnostic.txt
+            install-result.txt
+            build-log.txt
+          if-no-files-found: ignore
