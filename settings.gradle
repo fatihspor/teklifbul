@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = 'TeklifBul'
+rootProject.name = 'eUzman'
 include ':app'
