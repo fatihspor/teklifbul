@@ -49,9 +49,13 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep "package: name=\u0027com.euzman.app\u0027"
 
+      - name: Name APK for clear installation
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/eUzman-v1.4.apk
+
       - name: Save APK
         uses: actions/upload-artifact@v4
         with:
-          name: eUzman-Android-APK
-          path: app/build/outputs/apk/debug/*.apk
+          name: eUzman-v1.4-APK-YENI
+          path: app/build/outputs/apk/debug/eUzman-v1.4.apk
           if-no-files-found: error
