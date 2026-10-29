@@ -7,6 +7,25 @@ android {
     namespace 'com.teklifbul.app'
     compileSdk 35
 
+    signingConfigs {
+        release {
+            def keystorePath = System.getenv('EUZMAN_KEYSTORE_PATH')
+            if (keystorePath) {
+                storeFile file(keystorePath)
+                storePassword System.getenv('EUZMAN_STORE_PASSWORD')
+                keyAlias System.getenv('EUZMAN_KEY_ALIAS')
+                keyPassword System.getenv('EUZMAN_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+        }
+    }
+
     defaultConfig {
         applicationId 'com.euzman.app'
         minSdk 24
