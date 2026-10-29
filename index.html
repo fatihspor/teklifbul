@@ -6,6 +6,7 @@
 <title>TeklifBul - Hizmet Bul, Teklif Ver</title>
 <style>
 :root{--navy:#102844;--blue:#1764dc;--teal:#0bafa4;--bg:#f4f7fb;--muted:#61748b}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--navy);line-height:1.5}header{background:linear-gradient(125deg,#102844,#185fbd);color:white;padding:20px max(20px,calc((100vw - 1040px)/2)) 36px}header h1{margin:0;font-size:28px;letter-spacing:-1px}header p{margin:6px 0 0;opacity:.9}.hero{margin-top:24px;max-width:690px}.hero h2{font-size:clamp(27px,5vw,43px);line-height:1.16;margin:10px 0}.hero p{font-size:16px}.pill{display:inline-block;background:#ffffff24;border:1px solid #ffffff55;padding:6px 12px;border-radius:30px;font-size:12px;font-weight:700}main{max-width:1040px;margin:-16px auto 0;padding:0 16px 90px;position:relative}.card{background:white;padding:clamp(18px,4vw,28px);border-radius:20px;margin:16px 0;box-shadow:0 8px 30px #1234560d;border:1px solid #e9eef5}h2{margin:0 0 14px;font-size:22px;letter-spacing:-.5px}input,select,textarea{width:100%;padding:14px;margin:6px 0 15px;border:1px solid #d7e0eb;background:white;border-radius:12px;font:inherit;color:var(--navy)}input:focus,select:focus,textarea:focus{outline:2px solid #8cbcff;border-color:#1764dc}textarea{min-height:100px}label{font-size:14px;font-weight:650}button{background:var(--blue);color:white;border:0;border-radius:12px;padding:14px 18px;font-size:15px;font-weight:700;cursor:pointer}button:disabled{background:#a5adba}.tag{display:inline-block;background:#e9f4ff;padding:8px 11px;border-radius:12px;font-size:13px}.job{border:1px solid #e2eaf3;border-radius:16px;padding:18px;margin:12px 0;background:#fff}.job h3{margin:0 0 8px}small,.muted{color:var(--muted)}.notice{background:#eff7ff;padding:14px;border-radius:12px;color:#34516c}.category-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:18px 0}.category-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:102px;padding:12px 6px;border:1px solid #e6ecf4;border-radius:16px;background:#f9fbfe;color:#17324f;font-size:13px;font-weight:650;text-align:center;cursor:pointer}.category-tile span{font-size:27px}.category-tile:focus,.category-tile:hover{border-color:#5ca8e8;background:#eaf5ff}.search{background:white;border:0;margin:16px 0 0;box-shadow:0 6px 20px #0002}.section-intro{color:var(--muted);margin:-6px 0 15px}.trust{display:flex;flex-wrap:wrap;gap:10px}.trust span{background:#e8f7f5;color:#087e76;padding:8px 12px;border-radius:30px;font-size:13px;font-weight:650}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}.sticky-nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e4eaf2;display:flex;justify-content:space-around;padding:10px 5px max(10px,env(safe-area-inset-bottom));z-index:10}.sticky-nav a{color:#415d79;text-decoration:none;font-size:12px;font-weight:650;text-align:center}.sticky-nav a b{display:block;font-size:22px}.rating{color:#a36b00;font-weight:700}@media(max-width:650px){.category-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.two-col{grid-template-columns:1fr}header{padding:18px 20px 36px}main{padding-left:12px;padding-right:12px}.card{margin:12px 0}}
+.wizard-progress{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:12px 0}.wizard-progress span{height:6px;border-radius:8px;background:#dce5ef}.wizard-progress span.active{background:#1764dc}.wizard-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}.secondary-btn{background:#e9eef5;color:#17324f}.photo-preview{display:flex;gap:8px;flex-wrap:wrap}.photo-preview img,.job-photos img{width:92px;height:92px;object-fit:cover;border-radius:12px;border:1px solid #dce5ef}.job-photos{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.wizard-step[hidden],button[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -13,11 +14,18 @@
 <main><section class="card"><h2>Hesabım</h2><p class="section-intro">Hizmetleri incelemek için üye olmanız gerekmez. Üyelik bağlantısı hazırlanıyor.</p><div id="account"></div></section><section class="card" id="categories"><h2>Hangi hizmete ihtiyacın var?</h2><p class="section-intro">Bir kategoriye dokun, ilanını hemen oluşturmaya başla.</p><div class="category-grid" id="categoryGrid"></div><div class="trust"><span>✓ Ücretsiz teklif</span><span>✓ Gerçek iş yorumları (yakında)</span><span>✓ Ödeme doğrudan taraflar arasında</span></div></section>
 <section class="card" id="create">
 <h2>Ücretsiz Hizmet Talebi Oluştur</h2>
+<p class="section-intro">Dört kolay adımda işini anlat, teklif almaya başla.</p>
+<div class="wizard-progress" aria-label="İlan adımları"><span class="active"></span><span></span><span></span><span></span></div>
+<p id="wizardTitle" class="muted" aria-live="polite">1 / 4 · Hizmet seçimi</p>
 <form id="form">
-<label>Hizmet kategorisi</label>
+<div class="wizard-step" data-step="0">
+<label for="mainCategory">Ana kategori</label>
 <select id="mainCategory" required><option value="">Ana kategori seçin</option><option value="İnşaat ve Tadilat">1. İnşaat ve Tadilat</option><option value="Tesisat ve Isıtma">2. Tesisat ve Isıtma</option><option value="Elektrik ve Elektronik">3. Elektrik ve Elektronik</option><option value="Temizlik Hizmetleri">4. Temizlik Hizmetleri</option><option value="Eğitim ve Özel Ders">5. Eğitim ve Özel Ders</option><option value="Nakliye ve Taşımacılık">6. Nakliye ve Taşımacılık</option><option value="Mobilya ve Marangozluk">7. Mobilya ve Marangozluk</option><option value="Beyaz Eşya ve Klima Servisi">8. Beyaz Eşya ve Klima Servisi</option><option value="Otomobil ve Araç Hizmetleri">9. Otomobil ve Araç Hizmetleri</option><option value="Bahçe ve Peyzaj">10. Bahçe ve Peyzaj</option><option value="Bilgisayar ve Teknoloji">11. Bilgisayar ve Teknoloji</option><option value="Güzellik ve Kişisel Bakım">12. Güzellik ve Kişisel Bakım</option><option value="Organizasyon ve Etkinlik">13. Organizasyon ve Etkinlik</option><option value="Sağlık ve Evde Bakım">14. Sağlık ve Evde Bakım</option><option value="Evcil Hayvan Hizmetleri">15. Evcil Hayvan Hizmetleri</option><option value="Danışmanlık ve Profesyonel Hizmetler">16. Danışmanlık ve Profesyonel Hizmetler</option><option value="Diğer Hizmetler">17. Diğer Hizmetler</option></select>
 <label for="category">Alt hizmet</label>
 <select id="category" required disabled><option value="">Önce ana kategori seçin</option></select>
+
+</div>
+<div class="wizard-step" data-step="1" hidden>
 <label for="province">İl</label>
 <select id="province" required><option value="">İl seçin</option></select>
 <label for="district">İlçe</label>
@@ -25,11 +33,23 @@
 <label for="neighborhood">Mahalle</label>
 <select id="neighborhood" required disabled><option value="">Önce ilçe seçin</option></select>
 <p id="addressStatus"><small>Adres listesi yükleniyor...</small></p>
-<label>İşin açıklaması</label>
-<textarea id="description" placeholder="Hangi hizmeti istiyorsunuz?" required maxlength="1500"></textarea>
-<label>Tahmini bütçe (isteğe bağlı)</label>
+
+</div>
+<div class="wizard-step" data-step="2" hidden>
+<label for="description">İşin açıklaması</label>
+<textarea id="description" placeholder="Örneğin: 3+1 dairem boyanacak. Malzeme dahil teklif istiyorum." required maxlength="1500"></textarea>
+<label for="budget">Tahmini bütçe (isteğe bağlı)</label>
 <input id="budget" placeholder="Örn: 5000 TL" maxlength="80">
-<button type="submit">Ücretsiz İlan Oluştur</button>
+<label for="photos">İşin fotoğrafları (isteğe bağlı, en fazla 3)</label>
+<input id="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="photoHelp">
+<p id="photoHelp"><small>Fotoğraflar cihazınızda küçültülerek saklanır. Henüz başka kullanıcılara gönderilmez.</small></p>
+<div id="photoPreview" class="photo-preview" aria-live="polite"></div>
+</div>
+<div class="wizard-step" data-step="3" hidden>
+<h3>İlanını kontrol et</h3><div id="jobSummary" class="notice"></div>
+<p><small>Demo sürüm: İlan ve fotoğraflar yalnızca bu cihazda saklanır.</small></p>
+</div>
+<div class="wizard-actions"><button type="button" id="wizardBack" class="secondary-btn" hidden>Geri</button><button type="button" id="wizardNext">Devam et</button><button type="submit" id="wizardSubmit" hidden>Ücretsiz İlan Oluştur</button></div>
 </form>
 </section>
 <section class="card" id="openJobs">
@@ -94,6 +114,20 @@ setOptions(neighborhoodEl,names.sort((a,b)=>a.localeCompare(b,"tr")).map(name=>(
 statusEl.textContent="";
 }catch(e){statusEl.textContent="Mahalleler yüklenemedi. İlçeyi yeniden seçin.";}
 });
+const wizardSteps=[...document.querySelectorAll(".wizard-step")];
+const wizardBars=[...document.querySelectorAll(".wizard-progress span")];
+const wizardTitle=document.getElementById("wizardTitle");
+const wizardBack=document.getElementById("wizardBack"),wizardNext=document.getElementById("wizardNext"),wizardSubmit=document.getElementById("wizardSubmit");
+const photoInput=document.getElementById("photos"),photoPreview=document.getElementById("photoPreview");
+let wizardStep=0,selectedPhotos=[];
+function showWizardStep(n){wizardStep=n;wizardSteps.forEach((el,i)=>{el.hidden=i!==n;el.querySelectorAll("input,select,textarea").forEach(field=>{field.disabled=i!==n||(field.id==="category"&&!mainCategoryEl.value)||(field.id==="district"&&!provinceEl.value)||(field.id==="neighborhood"&&!districtEl.value);});});wizardBars.forEach((el,i)=>el.classList.toggle("active",i<=n));wizardTitle.textContent=(n+1)+" / 4 · "+["Hizmet seçimi","İşin konumu","Açıklama ve fotoğraflar","İlan önizleme"][n];wizardBack.hidden=n===0;wizardNext.hidden=n===3;wizardSubmit.hidden=n!==3;}
+function validateStep(n){const fields=[["mainCategory","category"],["province","district","neighborhood"],["description"],[]][n];for(const id of fields){const el=document.getElementById(id);if(!el.value.trim()){el.reportValidity();el.focus();return false;}}return true;}
+function updateSummary(){const category=serviceCategoryEl.selectedOptions[0]?.textContent||"";const place=[provinceEl.selectedOptions[0]?.textContent,districtEl.selectedOptions[0]?.textContent,neighborhoodEl.value].join(" / ");const root=document.getElementById("jobSummary");root.replaceChildren();for(const line of [category,place,document.getElementById("description").value.trim(),"Bütçe: "+(document.getElementById("budget").value.trim()||"Belirtilmedi"),"Fotoğraf: "+selectedPhotos.length]){const p=document.createElement("p");p.textContent=line;root.append(p);}}
+wizardNext.addEventListener("click",()=>{if(!validateStep(wizardStep))return;if(wizardStep===2)updateSummary();showWizardStep(Math.min(3,wizardStep+1));});
+wizardBack.addEventListener("click",()=>showWizardStep(Math.max(0,wizardStep-1)));
+function resizePhoto(file){return new Promise((resolve,reject)=>{const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{try{const scale=Math.min(1,640/Math.max(img.width,img.height));const canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);resolve(canvas.toDataURL("image/jpeg",.65));}catch(e){reject(e)}finally{URL.revokeObjectURL(url)}};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("Fotoğraf okunamadı"))};img.src=url;});}
+photoInput.addEventListener("change",async()=>{const files=[...photoInput.files];if(files.length>3){alert("En fazla 3 fotoğraf seçebilirsiniz.");photoInput.value="";return;}try{const next=[];for(const file of files){if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>10*1024*1024)throw new Error("Yalnızca 10 MB altındaki JPG, PNG veya WebP fotoğrafları seçin.");next.push(await resizePhoto(file));}selectedPhotos=next;photoPreview.replaceChildren();next.forEach(src=>{const img=document.createElement("img");img.src=src;img.alt="Seçilen iş fotoğrafı";photoPreview.append(img);});}catch(e){alert(e.message);photoInput.value="";selectedPhotos=[];photoPreview.replaceChildren();}});
+showWizardStep(0);
 const KEY="teklifbul_demo_jobs";
 const OFFER_KEY="teklifbul_demo_offers";
 let offers={};
@@ -133,7 +167,7 @@ try{localStorage.setItem(OFFER_KEY,JSON.stringify(offers))}catch(e){}
 render();
 alert("Demo teklif bu cihazda kaydedildi.");
 };
-box.append(h,loc,desc,budget,btn);
+box.append(h,loc,desc,budget);if(Array.isArray(job.photos)&&job.photos.length){const gallery=document.createElement("div");gallery.className="job-photos";job.photos.forEach(src=>{if(typeof src==="string"&&src.startsWith("data:image/jpeg;base64,")){const img=document.createElement("img");img.src=src;img.alt="İş fotoğrafı";img.loading="lazy";gallery.append(img);}});box.append(gallery);}box.append(btn);
 const submitted=offers[String(index)]||[];
 const count=document.createElement("p");
 count.textContent="Bu cihazdaki teklifler: "+submitted.length;
@@ -151,25 +185,12 @@ root.append(box);
 }
 document.getElementById("form").addEventListener("submit",function(e){
 e.preventDefault();
-const job={
-category:document.getElementById("category").value,
-location:[provinceEl.selectedOptions[0]?.text,districtEl.selectedOptions[0]?.text,neighborhoodEl.value].join(" / "),
-description:document.getElementById("description").value.trim(),
-budget:document.getElementById("budget").value.trim()
-};
-if(!provinceEl.value||!districtEl.value||!neighborhoodEl.value||!job.description)return;
-jobs.unshift(job);
-const shifted={};
-Object.entries(offers).forEach(([key,value])=>{shifted[String(Number(key)+1)]=value;});
-offers=shifted;
-try{localStorage.setItem(OFFER_KEY,JSON.stringify(offers))}catch(e){}
-try{localStorage.setItem(KEY,JSON.stringify(jobs))}catch(e){}
-render();
-this.reset();
-updateServices();
-setOptions(districtEl,[],"Önce il seçin");
-setOptions(neighborhoodEl,[],"Önce ilçe seçin");
-alert("Demo ilan oluşturuldu. Yalnızca bu tarayıcıda saklandı.");
+if(wizardStep!==3||![0,1,2].every(validateStep))return;
+const job={category:serviceCategoryEl.value,location:[provinceEl.selectedOptions[0]?.text,districtEl.selectedOptions[0]?.text,neighborhoodEl.value].join(" / "),description:document.getElementById("description").value.trim(),budget:document.getElementById("budget").value.trim(),photos:[...selectedPhotos]};
+const shifted={};Object.entries(offers).forEach(([key,value])=>{shifted[String(Number(key)+1)]=value;});
+const nextJobs=[job,...jobs];
+try{localStorage.setItem(KEY,JSON.stringify(nextJobs));localStorage.setItem(OFFER_KEY,JSON.stringify(shifted));}catch(err){alert("Cihaz depolama alanı dolu olabilir. Daha az fotoğrafla tekrar deneyin.");return;}
+jobs=nextJobs;offers=shifted;render();this.reset();selectedPhotos=[];photoPreview.replaceChildren();updateServices();setOptions(districtEl,[],"Önce il seçin");setOptions(neighborhoodEl,[],"Önce ilçe seçin");showWizardStep(0);alert("Demo ilan ve fotoğraflar bu cihazda kaydedildi.");
 });
 render();
 </script>
