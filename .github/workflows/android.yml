@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -36,7 +40,8 @@ jobs:
           grep -q 'https://fatihspor.github.io/teklifbul/' app/src/main/java/com/teklifbul/app/MainActivity.java
 
       - name: Build APK
-        run: gradle assembleDebug
+        run: gradle assembleDebug 2>&1 | tee build-log.txt
+        shell: bash
 
       - name: Validate APK package
         run: |
@@ -78,3 +83,15 @@ jobs:
           name: eUzman-v1.4-ANDROID-TESTED
           path: app/build/outputs/apk/debug/eUzman-v1.4.apk
           if-no-files-found: error
+
+      - name: Report failed installation diagnostics as GitHub issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo '### Android APK diagnostic failure' > diagnostic.txt
+          echo "Commit: ${GITHUB_SHA}" >> diagnostic.txt
+          echo "Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> diagnostic.txt
+          echo 'Build log tail:' >> diagnostic.txt
+          if [ -f build-log.txt ]; then tail -n 65 build-log.txt >> diagnostic.txt; fi
+          gh issue create --title "APK installation diagnostic - run ${GITHUB_RUN_NUMBER}" --body-file diagnostic.txt || true
