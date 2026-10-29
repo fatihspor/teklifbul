@@ -9,7 +9,7 @@
   function message(value) { root.replaceChildren(el("p", value)); }
   async function load() {
     if (!client) return;
-    const {data, error} = await client.from("jobs").select("id,owner_id,category,province,district,neighborhood,description,budget_note,preferred_date,preferred_time,alternative_date,work_days,created_at").eq("status","open").order("created_at",{ascending:false}).limit(50);
+    const {data, error} = await client.from("jobs").select("id,owner_id,category,province,district,neighborhood,description,budget_note,preferred_date,preferred_time,alternative_date,work_days,created_at,status,selected_offer_id").in("status",["open","awarded"]).order("created_at",{ascending:false}).limit(50);
     if (error) return message("İlanlar yüklenemedi. Lütfen yeniden deneyin.");
     root.replaceChildren();
     if (!data.length) root.append(el("p","Henüz açık ilan yok. İlk ilanı siz oluşturabilirsiniz."));
@@ -24,7 +24,7 @@
       if (user && job.owner_id === user.id) {
         const own = el("p","Bu ilan size ait. Gelen teklifler yalnızca size görünür.");
         card.append(own);
-        const {data:received,error:offerError} = await client.from("offers").select("amount,note,created_at,duration_text,material_included,availability,alternative_date").eq("job_id",job.id).order("created_at",{ascending:false});
+        const {data:received,error:offerError} = await client.from("offers").select("id,amount,note,created_at,duration_text,material_included,availability,alternative_date").eq("job_id",job.id).order("created_at",{ascending:false});
         if (!offerError) {
           const heading = el("h4", "Gelen teklifleri karşılaştır (" + received.length + ")");
           card.append(heading);
