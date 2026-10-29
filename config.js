@@ -2,5 +2,5 @@
 window.TEKLIFBUL_CONFIG = {
   supabaseUrl: "https://afoefhyjhqzjpvetkvra.supabase.co",
   supabaseAnonKey: "sb_publishable_0pCNKDHiJ1FwqGL1nXjPhw_6LprLcfx",
-  googleOAuthReady: false // Enable only after Google provider and redirect URLs are configured.
+  googleOAuthReady: false // Google OAuth can be added later; email login is enabled.
 };
