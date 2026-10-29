@@ -1,10 +1,13 @@
 package com.teklifbul.app;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.content.Intent;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceError;
 import android.webkit.WebChromeClient;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
@@ -13,6 +16,7 @@ import android.net.Uri;
 public class MainActivity extends Activity {
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
+    private boolean errorDialogVisible = false;
     private static final int FILE_REQUEST = 301;
 
     @Override
@@ -20,7 +24,20 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         webView = new WebView(this);
         setContentView(webView);
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                if (!request.isForMainFrame() || errorDialogVisible || isFinishing()) return;
+                errorDialogVisible = true;
+                new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("eUzman bağlantı sorunu")
+                    .setMessage("Sayfa yüklenemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.")
+                    .setPositiveButton("Tekrar dene", (dialog, which) -> webView.reload())
+                    .setNegativeButton("Kapat", (dialog, which) -> {})
+                    .setOnDismissListener(dialog -> errorDialogVisible = false)
+                    .show();
+            }
+        });
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
