@@ -2,6 +2,7 @@
 (function () {
   let client = null;
   let live = false;
+  let loadSequence = 0;
   const form = document.getElementById("form");
   const root = document.getElementById("jobs");
   const notice = document.querySelector("#providers .notice");
@@ -9,11 +10,14 @@
   function message(value) { root.replaceChildren(el("p", value)); }
   async function load() {
     if (!client) return;
+    const sequence = ++loadSequence;
     const {data, error} = await client.from("jobs").select("id,owner_id,category,province,district,neighborhood,description,budget_note,preferred_date,preferred_time,alternative_date,work_days,created_at,status,selected_offer_id").in("status",["open","awarded","completed"]).order("created_at",{ascending:false}).limit(50);
+    if (sequence !== loadSequence) return;
     if (error) return message("İlanlar yüklenemedi. Lütfen yeniden deneyin.");
     root.replaceChildren();
     if (!data.length) root.append(el("p","Henüz açık ilan yok. İlk ilanı siz oluşturabilirsiniz."));
     for (const job of data) {
+      if (sequence !== loadSequence) return;
       const card = el("div","");
       card.className = "job";
       card.append(el("h3",job.category),el("p","Konum: "+[job.province,job.district,job.neighborhood].join(" / ")),el("p",job.description),el("p","Bütçe: "+(job.budget_note||"Belirtilmedi")));
@@ -175,6 +179,7 @@
       } else {
         card.append(el("p",job.status==="completed"?"Bu iş tamamlandı.":job.status==="awarded"?"Bu iş için usta seçildi.":"Teklif vermek için giriş yapın."));
       }
+      if (sequence !== loadSequence) return;
       root.append(card);
     }
   }
