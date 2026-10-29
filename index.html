@@ -41,7 +41,7 @@
 <textarea id="description" placeholder="Örneğin: 3+1 dairem boyanacak. Malzeme dahil teklif istiyorum." required maxlength="1500"></textarea>
 <label for="budget">Tahmini bütçe (isteğe bağlı)</label>
 <input id="budget" placeholder="Örn: 5000 TL" maxlength="80">
-<label for="photos">İşin fotoğrafları (isteğe bağlı, en fazla 3)</label>
+<label for="preferredDate">İşin yapılmasını istediğiniz tarih</label><input type="date" id="preferredDate"><label for="preferredTime">Tercih edilen saat aralığı (isteğe bağlı)</label><select id="preferredTime"><option value="">Saat konusunda esneğim</option><option>09:00 - 12:00</option><option>12:00 - 15:00</option><option>15:00 - 18:00</option><option>Tam gün</option></select><label for="alternativeDate">Alternatif tarih (isteğe bağlı)</label><input type="date" id="alternativeDate"><label for="photos">İşin fotoğrafları (isteğe bağlı, en fazla 3)</label>
 <input id="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="photoHelp">
 <p id="photoHelp"><small>Fotoğraflar cihazınızda küçültülerek saklanır. Henüz başka kullanıcılara gönderilmez.</small></p>
 <div id="photoPreview" class="photo-preview" aria-live="polite"></div>
@@ -201,7 +201,7 @@ try{localStorage.setItem(OFFER_KEY,JSON.stringify(offers))}catch(e){}
 render();
 alert("Demo teklif bu cihazda kaydedildi.");
 };
-box.append(h,loc,desc,budget);
+box.append(h,loc,desc,budget);if(job.preferredDate){const when=document.createElement("p");when.textContent="Tercih edilen zaman: "+job.preferredDate+(job.preferredTime?" · "+job.preferredTime:"")+(job.alternativeDate?" · Alternatif: "+job.alternativeDate:"");box.append(when);}
 const stateLabel=document.createElement("p");stateLabel.className="tag";stateLabel.textContent=({open:"İlan açık",agreed:"Ustayla anlaşıldı",progress:"İş devam ediyor",completed:"İş tamamlandı",closed:"İlan kapatıldı"})[state]||"İlan açık";box.append(stateLabel);
 if(job.ownerId===ownerId){const actions=document.createElement("div");actions.className="wizard-actions";actions.style.flexWrap="wrap";const action=(label,next)=>{const b=document.createElement("button");b.type="button";b.className="secondary-btn";b.textContent=label;b.onclick=()=>{if(!confirm("İlan durumunu değiştirmek istiyor musunuz?"))return;job.status=next;try{localStorage.setItem(KEY,JSON.stringify(jobs))}catch(e){alert("Değişiklik kaydedilemedi.");return;}render()};actions.append(b)};if(state==="open"){action("İlanı kapat","closed");}if(state==="agreed"){action("İş başladı","progress");action("İlanı yeniden aç","open");}if(state==="progress"){action("İşi tamamla","completed");action("İlanı yeniden aç","open");}if(state==="closed"){action("İlanı yeniden aç","open");}box.append(actions);}if(Array.isArray(job.photos)&&job.photos.length){const gallery=document.createElement("div");gallery.className="job-photos";job.photos.forEach(src=>{if(typeof src==="string"&&src.startsWith("data:image/jpeg;base64,")){const img=document.createElement("img");img.src=src;img.alt="İş fotoğrafı";img.loading="lazy";gallery.append(img);}});box.append(gallery);}box.append(btn);
 const submitted=offers[String(index)]||[];
@@ -233,7 +233,7 @@ root.append(box);
 document.getElementById("form").addEventListener("submit",function(e){
 e.preventDefault();
 if(wizardStep!==3||![0,1,2].every(validateStep))return;
-const job={ownerId,status:"open",createdAt:new Date().toISOString(),category:serviceCategoryEl.value,location:[provinceEl.selectedOptions[0]?.text,districtEl.selectedOptions[0]?.text,neighborhoodEl.value].join(" / "),description:document.getElementById("description").value.trim(),budget:document.getElementById("budget").value.trim(),photos:[...selectedPhotos]};
+const job={ownerId,status:"open",createdAt:new Date().toISOString(),category:serviceCategoryEl.value,location:[provinceEl.selectedOptions[0]?.text,districtEl.selectedOptions[0]?.text,neighborhoodEl.value].join(" / "),description:document.getElementById("description").value.trim(),budget:document.getElementById("budget").value.trim(),preferredDate:document.getElementById("preferredDate").value,preferredTime:document.getElementById("preferredTime").value,alternativeDate:document.getElementById("alternativeDate").value,photos:[...selectedPhotos]};
 const shifted={};Object.entries(offers).forEach(([key,value])=>{shifted[String(Number(key)+1)]=value;});
 const nextJobs=[job,...jobs];
 try{localStorage.setItem(KEY,JSON.stringify(nextJobs));localStorage.setItem(OFFER_KEY,JSON.stringify(shifted));}catch(err){alert("Cihaz depolama alanı dolu olabilir. Daha az fotoğrafla tekrar deneyin.");return;}
