@@ -74,15 +74,7 @@ jobs:
             exit 1
           fi
 
-      - name: Publish validated APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: eUzman-v1.4-APK-VALIDATED
-          path: app/build/outputs/apk/debug/eUzman-v1.4.apk
-          if-no-files-found: error
-
-      - name: Test installation on Android emulator (non-blocking)
-        continue-on-error: true
+      - name: Test installation on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -96,6 +88,15 @@ jobs:
             adb install -r app/build/outputs/apk/debug/eUzman-v1.4.apk
             adb shell pm path com.euzman.app | grep -F 'package:'
             adb shell am start -n com.euzman.app/com.teklifbul.app.MainActivity
+            sleep 5
+            adb shell pidof com.euzman.app
+
+      - name: Publish emulator-installed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: eUzman-v1.4-EMULATOR-TESTED
+          path: app/build/outputs/apk/debug/eUzman-v1.4.apk
+          if-no-files-found: error
 
       - name: Report failed installation diagnostics as GitHub issue
         if: failure()
