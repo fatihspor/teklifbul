@@ -16,6 +16,8 @@
     if (error) return message("İlanlar yüklenemedi. Lütfen yeniden deneyin.");
     root.replaceChildren();
     if (!data.length) root.append(el("p","Henüz açık ilan yok. İlk ilanı siz oluşturabilirsiniz."));
+    const {data:{user}} = await client.auth.getUser();
+    if (sequence !== loadSequence) return;
     for (const job of data) {
       if (sequence !== loadSequence) return;
       const card = el("div","");
@@ -24,7 +26,6 @@
       if(job.preferred_date) card.append(el("p","İstenen tarih: "+job.preferred_date+(job.preferred_time?" · "+job.preferred_time:"")+(job.alternative_date?" · Alternatif: "+job.alternative_date:"")+(job.work_days?" · İş süresi: "+job.work_days+" gün":"")));
       const {data:photos} = await client.from("job_photos").select("storage_path").eq("job_id",job.id).limit(3);
       if (photos?.length) { const gallery=document.createElement("div");gallery.className="job-photos";for(const photo of photos){const img=document.createElement("img");img.src=client.storage.from("job-photos").getPublicUrl(photo.storage_path).data.publicUrl;img.loading="lazy";img.alt="İş fotoğrafı";gallery.append(img);}card.append(gallery);}
-      const {data:{user}} = await client.auth.getUser();
       if (user && job.owner_id === user.id) {
         const own = el("p",job.status==="completed"?"İş tamamlandı.":job.status==="awarded"?"Usta seçildi · Teklif alımı kapalı.":"Bu ilan size ait. Gelen teklifler yalnızca size görünür.");
         card.append(own);
