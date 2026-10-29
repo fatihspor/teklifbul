@@ -77,8 +77,9 @@ jobs:
           EUZMAN_KEYSTORE_PATH: ${{ runner.temp }}/euzman-release.jks
           EUZMAN_STORE_PASSWORD: ${{ secrets.EUZMAN_STORE_PASSWORD }}
           EUZMAN_KEY_ALIAS: ${{ secrets.EUZMAN_KEY_ALIAS }}
-          EUZMAN_KEY_PASSWORD: ${{ secrets.EUZMAN_KEY_PASSWORD }}
+          EUZMAN_KEY_PASSWORD: ${{ secrets.EUZMAN_STORE_PASSWORD }}
         run: |
+          # Generated PKCS12 key uses the same password for the store and private key.
           gradle :app:bundleRelease
           test -s app/build/outputs/bundle/release/app-release.aab
           unzip -t app/build/outputs/bundle/release/app-release.aab | tail -n 2
