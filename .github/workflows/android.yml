@@ -71,7 +71,7 @@ jobs:
           disable-animations: true
           script: |
             set -e
-            adb install -r app/build/outputs/apk/debug/eUzman-v1.4.apk
+            adb install -r app/build/outputs/apk/debug/eUzman-v1.4.apk 2>&1 | tee install-result.txt
             adb shell pm path com.euzman.app | grep -F "package:"
             adb shell am start -n com.euzman.app/com.teklifbul.app.MainActivity
             sleep 5
@@ -92,6 +92,8 @@ jobs:
           echo '### Android APK diagnostic failure' > diagnostic.txt
           echo "Commit: ${GITHUB_SHA}" >> diagnostic.txt
           echo "Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> diagnostic.txt
+          echo 'Installation result:' >> diagnostic.txt
+          if [ -f install-result.txt ]; then cat install-result.txt >> diagnostic.txt; fi
           echo 'Build log tail:' >> diagnostic.txt
           if [ -f build-log.txt ]; then tail -n 65 build-log.txt >> diagnostic.txt; fi
           gh issue create --title "APK installation diagnostic - run ${GITHUB_RUN_NUMBER}" --body-file diagnostic.txt || true
