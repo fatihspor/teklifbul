@@ -24,7 +24,7 @@
       if (user && job.owner_id === user.id) {
         const own = el("p","Bu ilan size ait. Gelen teklifler yalnızca size görünür.");
         card.append(own);
-        const {data:received,error:offerError} = await client.from("offers").select("amount,note,created_at").eq("job_id",job.id).order("created_at",{ascending:false});
+        const {data:received,error:offerError} = await client.from("offers").select("amount,note,created_at,duration_text,material_included,availability,alternative_date").eq("job_id",job.id).order("created_at",{ascending:false});
         if (!offerError) {
           const heading = el("h4", "Gelen teklifleri karşılaştır (" + received.length + ")");
           card.append(heading);
@@ -37,6 +37,9 @@
             const amount = el("strong", Number(offer.amount).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" TL");
             item.append(amount);
             if(index===0 && sorted.length>1) item.append(el("small","En düşük fiyatlı teklif"));
+            if(offer.duration_text) item.append(el("p","İş süresi: "+offer.duration_text));
+            item.append(el("p","Malzeme: "+(offer.material_included===true?"Dahil":offer.material_included===false?"Dahil değil":"Belirtilmedi")));
+            item.append(el("p","Tarih: "+(offer.availability==="requested"?"İstenen tarihte uygun":offer.availability==="alternative"?"Alternatif "+(offer.alternative_date||""):"Görüşülecek")));
             if(offer.note) item.append(el("p",offer.note));
             item.append(el("small","Teklif tarihi: "+new Date(offer.created_at).toLocaleDateString("tr-TR")));
             comparison.append(item);
@@ -64,6 +67,16 @@
           };
           const amount = makeField("Teklif tutarı (TL)", "input", "number");
           amount.required = true; amount.min = "1"; amount.max = "9999999999"; amount.step = "0.01";
+          const duration = makeField("İşin tamamlanma süresi", "input", "text");
+          duration.required=true;duration.maxLength=80;duration.value="1 gün";
+          const material = makeField("Malzeme fiyata dahil mi?", "select");
+          [["yes","Evet, dahil"],["no","Hayır, dahil değil"]].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;material.append(o);});
+          const availability = makeField("Tarih uygunluğu", "select");
+          [["requested","İstenen tarihte uygunum"],["alternative","Alternatif tarih öneriyorum"],["discuss","Tarihi görüşelim"]].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;availability.append(o);});
+          availability.value=job.preferred_date?"requested":"discuss";
+          const alternativeDate = makeField("Alternatif tarih", "input", "date");
+          alternativeDate.parentElement.hidden=true;
+          availability.addEventListener("change",()=>{alternativeDate.parentElement.hidden=availability.value!=="alternative";alternativeDate.required=availability.value==="alternative";});
           const note = makeField("Teklif açıklaması (isteğe bağlı)", "textarea");
           note.maxLength = 1000;
           note.placeholder = "Yapılacak işler, malzeme ve tahmini süre hakkında bilgi verin.";
@@ -85,7 +98,9 @@
               const {data:{user:currentUser},error:authError} = await client.auth.getUser();
               if (authError || !currentUser) { alert("Oturumunuz sona ermiş. Yeniden giriş yapın."); return; }
               const {error:offerError} = await client.from("offers").insert({
-                job_id:job.id,provider_id:currentUser.id,amount:value,note:note.value.trim()
+                job_id:job.id,provider_id:currentUser.id,amount:value,note:note.value.trim(),
+                duration_text:duration.value.trim(),material_included:material.value==="yes",
+                availability:availability.value,alternative_date:availability.value==="alternative"?alternativeDate.value:null
               });
               if (offerError) { alert("Teklif kaydedilemedi. Daha önce teklif vermiş olabilirsiniz."); return; }
               alert("Teklifiniz kaydedildi. Tutar yalnızca size ve ilan sahibine görünür.");
