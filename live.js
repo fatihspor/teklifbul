@@ -227,13 +227,19 @@
   window.addEventListener("teklifbul:client-ready",async()=>{
     client = window.teklifbulSupabase;
     if (!client) return;
-    const {data:{session}} = await client.auth.getSession();
     live = true;
     if (notice) notice.textContent="Canlı sistem: İlanları herkes görebilir. İlan veya teklif göndermek için giriş gerekir. Teklifler gizlidir.";
+    if (notice) {
+      const refresh = el("button", "İlanları yenile");
+      refresh.type = "button";
+      refresh.className = "secondary-btn";
+      refresh.style.marginTop = "10px";
+      refresh.addEventListener("click", () => { void load(); });
+      notice.insertAdjacentElement("afterend", refresh);
+    }
     await load();
-    client.auth.onAuthStateChange((_event,session)=>{
-      live=true;
-      void load();
+    client.auth.onAuthStateChange(() => {
+      window.setTimeout(() => { void load(); }, 0);
     });
   });
 })();
