@@ -8,7 +8,7 @@
   function el(tag, value) { const e = document.createElement(tag); e.textContent = value; return e; }
   function message(value) { root.replaceChildren(el("p", value)); }
   async function load() {
-    if (!client || !live) return;
+    if (!client) return;
     const {data, error} = await client.from("jobs").select("id,owner_id,category,province,district,neighborhood,description,budget_note,created_at").eq("status","open").order("created_at",{ascending:false}).limit(50);
     if (error) return message("İlanlar yüklenemedi. Lütfen yeniden deneyin.");
     root.replaceChildren();
@@ -39,6 +39,8 @@
           alert(offerError ? "Teklif kaydedilemedi. Aynı ilana daha önce teklif vermiş olabilirsiniz." : "Teklifiniz gizli olarak kaydedildi.");
         };
         card.append(button);
+      } else {
+        card.append(el("p","Teklif vermek için giriş yapın."));
       }
       root.append(card);
     }
@@ -48,7 +50,7 @@
     e.preventDefault();
     e.stopImmediatePropagation();
     const {data:{user}} = await client.auth.getUser();
-    if (!user) return alert("İlan vermek için Google ile giriş yapın.");
+    if (!user) return alert("İlan yayımlamak için hesabınıza giriş yapın. Hazırladığınız ilan korunuyor.");
     const job = {
       owner_id:user.id,category:document.getElementById("category").value,
       province:document.getElementById("province").selectedOptions[0]?.text||"",
@@ -83,16 +85,12 @@
     client = window.teklifbulSupabase;
     if (!client) return;
     const {data:{session}} = await client.auth.getSession();
-    live = Boolean(session);
-    if (live) {
-      if (notice) notice.textContent="Canlı sistem: İlanlar ortak veritabanına kaydedilir. Teklif tutarlarını yalnızca ilan sahibi ve teklif veren görür.";
-      await load();
-    }
+    live = true;
+    if (notice) notice.textContent="Canlı sistem: İlanları herkes görebilir. İlan veya teklif göndermek için giriş gerekir. Teklifler gizlidir.";
+    await load();
     client.auth.onAuthStateChange((_event,session)=>{
-      const wasLive=live;
-      live=Boolean(session);
-      if (live) { if(notice)notice.textContent="Canlı sistem: Teklifler gizlidir."; void load(); }
-      else if (wasLive) location.reload();
+      live=true;
+      void load();
     });
   });
 })();
