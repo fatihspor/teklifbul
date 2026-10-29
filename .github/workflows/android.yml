@@ -24,6 +24,17 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Check web app before packaging
+        run: |
+          node --check auth.js
+          node --check live.js
+          node --check config.js
+          test -s index.html
+          grep -q 'src="auth.js' index.html
+          grep -q 'src="live.js' index.html
+          grep -q 'src="config.js' index.html
+          grep -q 'https://fatihspor.github.io/teklifbul/' app/src/main/java/com/teklifbul/app/MainActivity.java
+
       - name: Build APK
         run: gradle assembleDebug
 
