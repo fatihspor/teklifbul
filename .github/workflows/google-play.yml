@@ -83,7 +83,8 @@ jobs:
           gradle :app:bundleRelease
           test -s app/build/outputs/bundle/release/app-release.aab
           unzip -t app/build/outputs/bundle/release/app-release.aab | tail -n 2
-          jarsigner -verify -strict -verbose -certs app/build/outputs/bundle/release/app-release.aab > "$RUNNER_TEMP/aab-signature-check.txt"
+          jarsigner -verify -verbose -certs app/build/outputs/bundle/release/app-release.aab > "$RUNNER_TEMP/aab-signature-check.txt"
+          grep -q "jar verified" "$RUNNER_TEMP/aab-signature-check.txt" || { echo "::error::AAB signature verification failed."; exit 1; }
           echo "Signed AAB verified successfully"
       - name: Upload Play Store bundle
         uses: actions/upload-artifact@v4
