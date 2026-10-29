@@ -22,7 +22,7 @@
       if (photos?.length) { const gallery=document.createElement("div");gallery.className="job-photos";for(const photo of photos){const img=document.createElement("img");img.src=client.storage.from("job-photos").getPublicUrl(photo.storage_path).data.publicUrl;img.loading="lazy";img.alt="İş fotoğrafı";gallery.append(img);}card.append(gallery);}
       const {data:{user}} = await client.auth.getUser();
       if (user && job.owner_id === user.id) {
-        const own = el("p","Bu ilan size ait. Gelen teklifler yalnızca size görünür.");
+        const own = el("p",job.status==="awarded"?"Usta seçildi · Teklif alımı kapalı.":"Bu ilan size ait. Gelen teklifler yalnızca size görünür.");
         card.append(own);
         const {data:received,error:offerError} = await client.from("offers").select("id,amount,note,created_at,duration_text,material_included,availability,alternative_date").eq("job_id",job.id).order("created_at",{ascending:false});
         if (!offerError) {
@@ -46,7 +46,7 @@
           });
           card.append(comparison);
         } else card.append(el("p","Gelen teklifler yüklenemedi."));
-      } else if (user) {
+      } else if (user && job.status==="open") {
         const button = el("button","Gizli teklif ver");
         button.type = "button";
         button.onclick = () => {
@@ -117,7 +117,7 @@
         };
         card.append(button);
       } else {
-        card.append(el("p","Teklif vermek için giriş yapın."));
+        card.append(el("p",job.status==="awarded"?"Bu iş için usta seçildi.":"Teklif vermek için giriş yapın."));
       }
       root.append(card);
     }
