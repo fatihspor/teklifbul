@@ -44,6 +44,10 @@ jobs:
           test -s "$APK"
           test "$(stat -c%s "$APK")" -gt 8192
           unzip -t "$APK" | tail -n 2
+          unzip -l "$APK"
+          unzip -Z1 "$APK" | grep -Fx 'classes.dex'
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -v 4 "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep -F 'launchable-activity:'
           ls -lh "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | head -n 3
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$APK"
