@@ -41,8 +41,23 @@ jobs:
           EUZMAN_KEY_ALIAS: ${{ secrets.EUZMAN_KEY_ALIAS }}
           EUZMAN_KEY_PASSWORD: ${{ secrets.EUZMAN_KEY_PASSWORD }}
         run: |
+          set -euo pipefail
           test -s "$RUNNER_TEMP/euzman-release.jks"
-          keytool -list -keystore "$RUNNER_TEMP/euzman-release.jks" -storepass "$EUZMAN_STORE_PASSWORD" -alias "$EUZMAN_KEY_ALIAS" >/dev/null
+          # Never print keystore contents, alias values, passwords, or keytool stderr.
+          if ! keytool -list -keystore "$RUNNER_TEMP/euzman-release.jks" -storepass "$EUZMAN_STORE_PASSWORD" >/dev/null 2>&1; then
+            echo "::error::Keystore cannot be opened. Check EUZMAN_KEYSTORE_BASE64 and EUZMAN_STORE_PASSWORD (file or store password mismatch)."
+            exit 1
+          fi
+          if ! keytool -list -keystore "$RUNNER_TEMP/euzman-release.jks" -storepass "$EUZMAN_STORE_PASSWORD" -alias "$EUZMAN_KEY_ALIAS" >/dev/null 2>&1; then
+            echo "::error::Keystore opens, but EUZMAN_KEY_ALIAS does not match an entry. Check alias spelling."
+            exit 1
+          fi
+          if ! keytool -importkeystore -srckeystore "$RUNNER_TEMP/euzman-release.jks" -srcstorepass "$EUZMAN_STORE_PASSWORD" -srcalias "$EUZMAN_KEY_ALIAS" -srckeypass "$EUZMAN_KEY_PASSWORD" -destkeystore "$RUNNER_TEMP/key-check.p12" -deststoretype PKCS12 -deststorepass "$EUZMAN_STORE_PASSWORD" -destkeypass "$EUZMAN_STORE_PASSWORD" -noprompt >/dev/null 2>&1; then
+            echo "::error::Keystore and alias are valid, but private key password or key entry is invalid. Check EUZMAN_KEY_PASSWORD."
+            exit 1
+          fi
+          rm -f "$RUNNER_TEMP/key-check.p12"
+          echo "Upload key validated without exposing credentials"
       - name: Build signed release AAB
         env:
           EUZMAN_KEYSTORE_PATH: ${{ runner.temp }}/euzman-release.jks
