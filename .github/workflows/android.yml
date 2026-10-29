@@ -40,7 +40,9 @@ jobs:
           grep -q 'https://fatihspor.github.io/teklifbul/' app/src/main/java/com/teklifbul/app/MainActivity.java
 
       - name: Build APK
-        run: gradle assembleDebug 2>&1 | tee build-log.txt
+        run: |
+          set -euo pipefail
+          gradle assembleDebug 2>&1 | tee build-log.txt
         shell: bash
 
       - name: Validate APK package
@@ -70,12 +72,13 @@ jobs:
           profile: pixel_6
           disable-animations: true
           script: |
-            set -e
+            set -euo pipefail
             adb install -r app/build/outputs/apk/debug/eUzman-v1.4.apk 2>&1 | tee install-result.txt
             adb shell pm path com.euzman.app | grep -F "package:"
             adb shell am start -n com.euzman.app/com.teklifbul.app.MainActivity
             sleep 5
             adb shell pidof com.euzman.app
+            adb shell dumpsys package com.euzman.app | grep -m 1 'versionName='
 
       - name: Publish APK only after successful emulator install
         uses: actions/upload-artifact@v4
