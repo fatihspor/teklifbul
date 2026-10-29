@@ -43,7 +43,7 @@
         const email = prompt("Giriş bağlantısı gönderilecek e-posta adresiniz:");
         if (email === null) return;
         const trimmed=email.trim();
-        if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(trimmed)) {status.textContent=" Geçerli bir e-posta adresi girin.";return;}
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {status.textContent=" Geçerli bir e-posta adresi girin.";return;}
         const { error } = await client.auth.signInWithOtp({email:trimmed,options:{emailRedirectTo:location.origin+location.pathname}});
         status.textContent=error?" Giriş bağlantısı gönderilemedi. E-posta ayarlarını kontrol edin.":" E-postanıza giriş bağlantısı gönderildi. Gelen kutunuzu kontrol edin.";
       }
