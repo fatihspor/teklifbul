@@ -1,5 +1,4 @@
-
-name: TeklifBul Android APK
+name: eUzman Android APK
 
 on:
   push:
@@ -9,35 +8,39 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Download project
+      - name: Checkout project
         uses: actions/checkout@v4
-
-      - name: Install Java
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
-      - name: Install Gradle
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android build tools
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-
-      - name: Build APK
-        run: gradle assembleDebug
-
-      - name: Validate APK package
+      - name: Clean and build debug APK
+        run: gradle --no-daemon clean assembleDebug
+      - name: Verify APK integrity and signature
+        shell: bash
         run: |
+          set -euo pipefail
           APK=app/build/outputs/apk/debug/app-debug.apk
           test -s "$APK"
-          unzip -t "$APK" | tail -n 2
+          unzip -t "$APK"
+          unzip -Z1 "$APK" | grep -q '^classes.dex$'
+          unzip -Z1 "$APK" | grep -q '^AndroidManifest.xml$'
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
           ls -lh "$APK"
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | head -n 3
-
-      - name: Save APK
+      - name: Upload verified APK
         uses: actions/upload-artifact@v4
         with:
-          name: TeklifBul-APK
-          path: app/build/outputs/apk/debug/*.apk
+          name: eUzman-Android-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
