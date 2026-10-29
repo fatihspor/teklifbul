@@ -28,15 +28,59 @@
       } else if (user) {
         const button = el("button","Gizli teklif ver");
         button.type = "button";
-        button.onclick = async () => {
-          const raw = prompt("Teklif tutarınız (TL):");
-          if (raw === null) return;
-          const amount = Number(raw.trim().replace(",","."));
-          if (!Number.isFinite(amount) || amount <= 0 || amount > 9999999999) return alert("Geçerli bir tutar girin.");
-          const note = prompt("Açıklama (isteğe bağlı):");
-          if (note === null) return;
-          const {error:offerError} = await client.from("offers").insert({job_id:job.id,provider_id:user.id,amount,note:note.slice(0,1000)});
-          alert(offerError ? "Teklif kaydedilemedi. Aynı ilana daha önce teklif vermiş olabilirsiniz." : "Teklifiniz gizli olarak kaydedildi.");
+        button.onclick = () => {
+          const previous = card.querySelector(".live-offer-form");
+          if (previous) { previous.remove(); return; }
+          const offerForm = document.createElement("form");
+          offerForm.className = "bid-form live-offer-form";
+          const heading = el("h4", "Gizli teklif oluştur");
+          offerForm.append(heading);
+          const makeField = (title, tag, type) => {
+            const label = document.createElement("label");
+            label.textContent = title;
+            const input = document.createElement(tag);
+            if (type) input.type = type;
+            label.append(input);
+            offerForm.append(label);
+            return input;
+          };
+          const amount = makeField("Teklif tutarı (TL)", "input", "number");
+          amount.required = true; amount.min = "1"; amount.max = "9999999999"; amount.step = "0.01";
+          const note = makeField("Teklif açıklaması (isteğe bağlı)", "textarea");
+          note.maxLength = 1000;
+          note.placeholder = "Yapılacak işler, malzeme ve tahmini süre hakkında bilgi verin.";
+          const send = el("button", "Teklifi güvenli gönder");
+          send.type = "submit";
+          offerForm.append(send);
+          offerForm.addEventListener("submit", async event => {
+            event.preventDefault();
+            const value = Number(amount.value);
+            if (!Number.isFinite(value) || value <= 0 || value > 9999999999) {
+              amount.setCustomValidity("Geçerli bir tutar girin.");
+              amount.reportValidity();
+              amount.setCustomValidity("");
+              return;
+            }
+            send.disabled = true;
+            send.textContent = "Gönderiliyor...";
+            try {
+              const {data:{user:currentUser},error:authError} = await client.auth.getUser();
+              if (authError || !currentUser) { alert("Oturumunuz sona ermiş. Yeniden giriş yapın."); return; }
+              const {error:offerError} = await client.from("offers").insert({
+                job_id:job.id,provider_id:currentUser.id,amount:value,note:note.value.trim()
+              });
+              if (offerError) { alert("Teklif kaydedilemedi. Daha önce teklif vermiş olabilirsiniz."); return; }
+              alert("Teklifiniz kaydedildi. Tutar yalnızca size ve ilan sahibine görünür.");
+              await load();
+            } catch (_) {
+              alert("Bağlantı hatası. Lütfen yeniden deneyin.");
+            } finally {
+              send.disabled = false;
+              send.textContent = "Teklifi güvenli gönder";
+            }
+          });
+          button.insertAdjacentElement("afterend", offerForm);
+          amount.focus();
         };
         card.append(button);
       } else {
