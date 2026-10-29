@@ -1,0 +1,57 @@
+name: eUzman Google Play AAB
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Check release signing secrets
+        env:
+          KEYSTORE_B64: ${{ secrets.EUZMAN_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.EUZMAN_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.EUZMAN_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.EUZMAN_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "::error::Set EUZMAN_KEYSTORE_BASE64, EUZMAN_STORE_PASSWORD, EUZMAN_KEY_ALIAS and EUZMAN_KEY_PASSWORD in GitHub Actions secrets."
+            exit 1
+          fi
+      - name: Decode signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.EUZMAN_KEYSTORE_BASE64 }}
+        run: |
+          umask 077
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/euzman-release.jks"
+      - name: Build signed release AAB
+        env:
+          EUZMAN_KEYSTORE_PATH: ${{ runner.temp }}/euzman-release.jks
+          EUZMAN_STORE_PASSWORD: ${{ secrets.EUZMAN_STORE_PASSWORD }}
+          EUZMAN_KEY_ALIAS: ${{ secrets.EUZMAN_KEY_ALIAS }}
+          EUZMAN_KEY_PASSWORD: ${{ secrets.EUZMAN_KEY_PASSWORD }}
+        run: |
+          gradle :app:bundleRelease
+          test -s app/build/outputs/bundle/release/app-release.aab
+          unzip -t app/build/outputs/bundle/release/app-release.aab | tail -n 2
+          jarsigner -verify app/build/outputs/bundle/release/app-release.aab
+      - name: Upload Play Store bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: eUzman-Google-Play-AAB
+          path: app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+      - name: Remove temporary signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/euzman-release.jks"
