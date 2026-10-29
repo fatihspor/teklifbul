@@ -64,6 +64,16 @@ jobs:
         run: |
           cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/eUzman-v1.4.apk
 
+      - name: Enable KVM acceleration for Android emulators
+        run: |
+          if [ -e /dev/kvm ]; then
+            sudo chmod 666 /dev/kvm
+            ls -l /dev/kvm
+          else
+            echo 'KVM device unavailable on runner' >&2
+            exit 1
+          fi
+
       - name: Test installation on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -71,6 +81,8 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: |
             set -euo pipefail
             adb install -r app/build/outputs/apk/debug/eUzman-v1.4.apk 2>&1 | tee install-result.txt
@@ -87,6 +99,8 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: |
             set -e
             adb install -r app/build/outputs/apk/debug/eUzman-v1.4.apk
