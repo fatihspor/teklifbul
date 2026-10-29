@@ -39,6 +39,18 @@ jobs:
           grep -q 'src="config.js' index.html
           grep -q 'https://fatihspor.github.io/teklifbul/' app/src/main/java/com/teklifbul/app/MainActivity.java
 
+      - name: Verify published eUzman website
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --connect-timeout 15 --max-time 45 \
+            https://fatihspor.github.io/teklifbul/ -o published-index.html
+          grep -qi 'eUzman' published-index.html
+          for asset in auth.js live.js config.js; do
+            curl --fail --location --retry 3 --connect-timeout 15 --max-time 45 \
+              "https://fatihspor.github.io/teklifbul/$asset" -o "published-$asset"
+            test -s "published-$asset"
+          done
+
       - name: Build APK
         run: |
           set -euo pipefail
@@ -56,6 +68,8 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -v 4 "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep -F 'launchable-activity:'
           ls -lh "$APK"
+          echo "APK_BYTES=$(stat -c%s \"$APK\")" >> "$GITHUB_STEP_SUMMARY"
+          echo "APK_SHA256=$(sha256sum \"$APK\" | cut -d' ' -f1)" >> "$GITHUB_STEP_SUMMARY"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | head -n 3
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep -F "com.euzman.app"
