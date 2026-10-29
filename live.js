@@ -42,7 +42,7 @@
             item.append(el("p","Tarih: "+(offer.availability==="requested"?"İstenen tarihte uygun":offer.availability==="alternative"?"Alternatif "+(offer.alternative_date||""):"Görüşülecek")));
             if(offer.note) item.append(el("p",offer.note));
             item.append(el("small","Teklif tarihi: "+new Date(offer.created_at).toLocaleDateString("tr-TR")));
-            comparison.append(item);
+            if(job.status==="open"){const accept=el("button","Bu teklifi kabul et");accept.type="button";accept.onclick=async()=>{if(!confirm("Teklifi kabul edip ilanı kapatmak istiyor musunuz?"))return;accept.disabled=true;const {data:ok,error}=await client.rpc("accept_job_offer",{p_job_id:job.id,p_offer_id:offer.id});if(error||!ok){alert("Teklif kabul edilemedi.");accept.disabled=false;return;}alert("Teklif kabul edildi.");await load();};item.append(accept);}else if(job.selected_offer_id===offer.id)item.append(el("strong","✓ Seçilen teklif"));comparison.append(item);
           });
           card.append(comparison);
         } else card.append(el("p","Gelen teklifler yüklenemedi."));
