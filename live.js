@@ -9,7 +9,7 @@
   function message(value) { root.replaceChildren(el("p", value)); }
   async function load() {
     if (!client) return;
-    const {data, error} = await client.from("jobs").select("id,owner_id,category,province,district,neighborhood,description,budget_note,preferred_date,preferred_time,alternative_date,work_days,created_at,status,selected_offer_id").in("status",["open","awarded"]).order("created_at",{ascending:false}).limit(50);
+    const {data, error} = await client.from("jobs").select("id,owner_id,category,province,district,neighborhood,description,budget_note,preferred_date,preferred_time,alternative_date,work_days,created_at,status,selected_offer_id").in("status",["open","awarded","completed"]).order("created_at",{ascending:false}).limit(50);
     if (error) return message("İlanlar yüklenemedi. Lütfen yeniden deneyin.");
     root.replaceChildren();
     if (!data.length) root.append(el("p","Henüz açık ilan yok. İlk ilanı siz oluşturabilirsiniz."));
@@ -22,8 +22,9 @@
       if (photos?.length) { const gallery=document.createElement("div");gallery.className="job-photos";for(const photo of photos){const img=document.createElement("img");img.src=client.storage.from("job-photos").getPublicUrl(photo.storage_path).data.publicUrl;img.loading="lazy";img.alt="İş fotoğrafı";gallery.append(img);}card.append(gallery);}
       const {data:{user}} = await client.auth.getUser();
       if (user && job.owner_id === user.id) {
-        const own = el("p",job.status==="awarded"?"Usta seçildi · Teklif alımı kapalı.":"Bu ilan size ait. Gelen teklifler yalnızca size görünür.");
+        const own = el("p",job.status==="completed"?"İş tamamlandı.":job.status==="awarded"?"Usta seçildi · Teklif alımı kapalı.":"Bu ilan size ait. Gelen teklifler yalnızca size görünür.");
         card.append(own);
+        if(job.status==="awarded"){const finish=el("button","İşi tamamlandı olarak onayla");finish.type="button";finish.onclick=async()=>{if(!confirm("İşin tamamlandığını onaylıyor musunuz? Bu işlem ödeme aktarmaz."))return;finish.disabled=true;const {data:ok,error}=await client.rpc("advance_job_status",{p_job_id:job.id,p_next_status:"completed"});if(error||!ok){alert("İş durumu değiştirilemedi.");finish.disabled=false;return;}await load();};card.append(finish);}
         const {data:received,error:offerError} = await client.from("offers").select("id,amount,note,created_at,duration_text,material_included,availability,alternative_date").eq("job_id",job.id).order("created_at",{ascending:false});
         if (!offerError) {
           const heading = el("h4", "Gelen teklifleri karşılaştır (" + received.length + ")");
@@ -117,7 +118,7 @@
         };
         card.append(button);
       } else {
-        card.append(el("p",job.status==="awarded"?"Bu iş için usta seçildi.":"Teklif vermek için giriş yapın."));
+        card.append(el("p",job.status==="completed"?"Bu iş tamamlandı.":job.status==="awarded"?"Bu iş için usta seçildi.":"Teklif vermek için giriş yapın."));
       }
       root.append(card);
     }
