@@ -8,11 +8,11 @@
   status.setAttribute("role", "status");
   const button = document.createElement("button");
   button.type = "button";
-  button.textContent = "Google ile giriş yap";
+  button.textContent = "E-posta ile giriş yap";
   host.append(button, status);
-  if (!ready || !config.googleOAuthReady) {
+  if (!ready) {
     button.disabled = true;
-    status.textContent = " Google OAuth ayarı tamamlanınca giriş açılacak. Hizmetleri üyelik olmadan inceleyebilirsiniz.";
+    status.textContent = " Giriş ayarları henüz tamamlanmadı.";
     return;
   }
   try {
@@ -23,7 +23,7 @@
     const refresh = async () => {
       const { data: { user }, error } = await client.auth.getUser();
       if (error || !user) {
-        button.textContent = "Google ile giriş yap";
+        button.textContent = "E-posta ile giriş yap";
         status.textContent = "";
       } else {
         button.textContent = "Çıkış yap";
@@ -40,11 +40,12 @@
         if (error) status.textContent = " Çıkış başarısız, tekrar deneyin.";
         await refresh();
       } else {
-        const { error } = await client.auth.signInWithOAuth({
-          provider: "google",
-          options: { redirectTo: location.origin + location.pathname }
-        });
-        if (error) status.textContent = " Giriş başlatılamadı. Tekrar deneyin.";
+        const email = prompt("Giriş bağlantısı gönderilecek e-posta adresiniz:");
+        if (email === null) return;
+        const trimmed=email.trim();
+        if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(trimmed)) {status.textContent=" Geçerli bir e-posta adresi girin.";return;}
+        const { error } = await client.auth.signInWithOtp({email:trimmed,options:{emailRedirectTo:location.origin+location.pathname}});
+        status.textContent=error?" Giriş bağlantısı gönderilemedi. E-posta ayarlarını kontrol edin.":" E-postanıza giriş bağlantısı gönderildi. Gelen kutunuzu kontrol edin.";
       }
     };
     client.auth.onAuthStateChange(() => { void refresh(); });
