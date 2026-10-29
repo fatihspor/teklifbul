@@ -156,6 +156,8 @@ function resizePhoto(file){return new Promise((resolve,reject)=>{const img=new I
 photoInput.addEventListener("change",async()=>{const files=[...photoInput.files];if(files.length>3){alert("En fazla 3 fotoğraf seçebilirsiniz.");photoInput.value="";return;}try{const next=[];for(const file of files){if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>10*1024*1024)throw new Error("Yalnızca 10 MB altındaki JPG, PNG veya WebP fotoğrafları seçin.");next.push(await resizePhoto(file));}selectedPhotos=next;photoPreview.replaceChildren();next.forEach(src=>{const img=document.createElement("img");img.src=src;img.alt="Seçilen iş fotoğrafı";photoPreview.append(img);});}catch(e){alert(e.message);photoInput.value="";selectedPhotos=[];photoPreview.replaceChildren();}});
 showWizardStep(0);
 const KEY="teklifbul_demo_jobs";
+const OWNER_KEY="teklifbul_demo_owner";
+let ownerId=localStorage.getItem(OWNER_KEY);if(!ownerId){ownerId=(globalThis.crypto?.randomUUID?.()||String(Date.now())+"-"+Math.random().toString(36).slice(2));try{localStorage.setItem(OWNER_KEY,ownerId)}catch(_){}}
 const OFFER_KEY="teklifbul_demo_offers";
 let offers={};
 try{offers=JSON.parse(localStorage.getItem(OFFER_KEY))||{}}catch(e){offers={}}
@@ -171,6 +173,7 @@ root.replaceChildren();
 jobs.forEach((job,index)=>{
 const box=document.createElement("div");
 box.className="job";
+const state=job.status||"open";
 const h=document.createElement("h3");
 h.textContent=job.category;
 const loc=document.createElement("p");
@@ -180,7 +183,7 @@ desc.textContent=job.description;
 const budget=document.createElement("p");
 budget.textContent="Bütçe: "+(job.budget||"Belirtilmedi");
 const btn=document.createElement("button");
-btn.textContent="Teklif Ver";
+btn.textContent=state==="open"?"Teklif Ver":"Teklif alımı kapalı";btn.disabled=state!=="open";
 btn.onclick=()=>{
 const name=prompt("Adınız veya işletme adınız:");
 if(!name||!name.trim())return;
@@ -194,7 +197,9 @@ try{localStorage.setItem(OFFER_KEY,JSON.stringify(offers))}catch(e){}
 render();
 alert("Demo teklif bu cihazda kaydedildi.");
 };
-box.append(h,loc,desc,budget);if(Array.isArray(job.photos)&&job.photos.length){const gallery=document.createElement("div");gallery.className="job-photos";job.photos.forEach(src=>{if(typeof src==="string"&&src.startsWith("data:image/jpeg;base64,")){const img=document.createElement("img");img.src=src;img.alt="İş fotoğrafı";img.loading="lazy";gallery.append(img);}});box.append(gallery);}box.append(btn);
+box.append(h,loc,desc,budget);
+const stateLabel=document.createElement("p");stateLabel.className="tag";stateLabel.textContent=({open:"İlan açık",agreed:"Ustayla anlaşıldı",progress:"İş devam ediyor",completed:"İş tamamlandı",closed:"İlan kapatıldı"})[state]||"İlan açık";box.append(stateLabel);
+if(job.ownerId===ownerId){const actions=document.createElement("div");actions.className="wizard-actions";actions.style.flexWrap="wrap";const action=(label,next)=>{const b=document.createElement("button");b.type="button";b.className="secondary-btn";b.textContent=label;b.onclick=()=>{if(!confirm("İlan durumunu değiştirmek istiyor musunuz?"))return;job.status=next;try{localStorage.setItem(KEY,JSON.stringify(jobs))}catch(e){alert("Değişiklik kaydedilemedi.");return;}render()};actions.append(b)};if(state==="open"){action("İlanı kapat","closed");}if(state==="agreed"){action("İş başladı","progress");action("İlanı yeniden aç","open");}if(state==="progress"){action("İşi tamamla","completed");action("İlanı yeniden aç","open");}if(state==="closed"){action("İlanı yeniden aç","open");}box.append(actions);}if(Array.isArray(job.photos)&&job.photos.length){const gallery=document.createElement("div");gallery.className="job-photos";job.photos.forEach(src=>{if(typeof src==="string"&&src.startsWith("data:image/jpeg;base64,")){const img=document.createElement("img");img.src=src;img.alt="İş fotoğrafı";img.loading="lazy";gallery.append(img);}});box.append(gallery);}box.append(btn);
 const submitted=offers[String(index)]||[];
 const count=document.createElement("p");
 count.textContent="Bu cihazdaki teklifler: "+submitted.length;
@@ -207,13 +212,14 @@ item.style.margin="6px 0";
 item.textContent=o.name+" — "+o.price+" TL"+(o.note?" — "+o.note:"");
 box.append(item);
 });
+if(job.ownerId===ownerId&&state==="open"&&submitted.length){const choose=document.createElement("div");choose.className="notice";const title=document.createElement("strong");title.textContent="Bir teklifi seç:";choose.append(title);submitted.forEach((offer,offerIndex)=>{const b=document.createElement("button");b.type="button";b.className="secondary-btn";b.style.margin="6px";b.textContent=(offer.name||"Usta")+" ile anlaş";b.onclick=()=>{if(!confirm("Bu hizmet verenle anlaştığınızı onaylıyor musunuz? Yeni teklif alımı duracak."))return;job.status="agreed";job.selectedOfferIndex=offerIndex;try{localStorage.setItem(KEY,JSON.stringify(jobs))}catch(e){alert("Değişiklik kaydedilemedi.");return;}render()};choose.append(b)});box.append(choose)}
 root.append(box);
 });
 }
 document.getElementById("form").addEventListener("submit",function(e){
 e.preventDefault();
 if(wizardStep!==3||![0,1,2].every(validateStep))return;
-const job={category:serviceCategoryEl.value,location:[provinceEl.selectedOptions[0]?.text,districtEl.selectedOptions[0]?.text,neighborhoodEl.value].join(" / "),description:document.getElementById("description").value.trim(),budget:document.getElementById("budget").value.trim(),photos:[...selectedPhotos]};
+const job={ownerId,status:"open",createdAt:new Date().toISOString(),category:serviceCategoryEl.value,location:[provinceEl.selectedOptions[0]?.text,districtEl.selectedOptions[0]?.text,neighborhoodEl.value].join(" / "),description:document.getElementById("description").value.trim(),budget:document.getElementById("budget").value.trim(),photos:[...selectedPhotos]};
 const shifted={};Object.entries(offers).forEach(([key,value])=>{shifted[String(Number(key)+1)]=value;});
 const nextJobs=[job,...jobs];
 try{localStorage.setItem(KEY,JSON.stringify(nextJobs));localStorage.setItem(OFFER_KEY,JSON.stringify(shifted));}catch(err){alert("Cihaz depolama alanı dolu olabilir. Daha az fotoğrafla tekrar deneyin.");return;}
