@@ -16,7 +16,7 @@
     return;
   }
   try {
-    const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+    const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/+esm");
     const client = createClient(config.supabaseUrl, config.supabaseAnonKey);
     window.teklifbulSupabase = client;
     window.dispatchEvent(new Event("teklifbul:client-ready"));
@@ -51,7 +51,8 @@
     client.auth.onAuthStateChange(() => { void refresh(); });
     await refresh();
   } catch (e) {
-    button.disabled = true;
-    status.textContent = " Giriş hizmetine ulaşılamıyor. Daha sonra tekrar deneyin.";
+    button.disabled = false;
+    button.onclick = () => alert("Giriş sistemi yüklenemedi. İnternet bağlantınızı kontrol edip sayfayı yenileyin.");
+    status.textContent = " Giriş sistemi yüklenemedi; sayfayı yenileyin.";
   }
 })();
