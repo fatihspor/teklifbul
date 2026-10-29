@@ -42,9 +42,12 @@ jobs:
         run: |
           APK=app/build/outputs/apk/debug/app-debug.apk
           test -s "$APK"
+          test "$(stat -c%s "$APK")" -gt 8192
           unzip -t "$APK" | tail -n 2
           ls -lh "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | head -n 3
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep "package: name=\u0027com.euzman.app\u0027"
 
       - name: Save APK
         uses: actions/upload-artifact@v4
