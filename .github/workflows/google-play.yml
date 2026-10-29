@@ -48,6 +48,15 @@ jobs:
         run: |
           set -euo pipefail
           test -s "$RUNNER_TEMP/euzman-release.jks"
+          # Compare only a SHA-256 fingerprint of the original 32-character random password.
+          # Never echo the secret, its fingerprint, or the keytool stderr.
+          expected_store_password_sha256="d98a65fe20232d6fe6e9366bf0d369ca088879c52b5a73220595a20f2a0614e8"
+          actual_store_password_sha256="$(printf '%s' "$EUZMAN_STORE_PASSWORD" | sha256sum | cut -d' ' -f1)"
+          if [ "$actual_store_password_sha256" != "$expected_store_password_sha256" ]; then
+            echo "::error::EUZMAN_STORE_PASSWORD does not exactly match the original generated password (possible extra/missing character). Recopy only the value from GitHub-Secrets.txt."
+            exit 1
+          fi
+          echo "Store password matches original generated password"
           # Never print keystore contents, alias values, passwords, or keytool stderr.
           if ! keytool -list -keystore "$RUNNER_TEMP/euzman-release.jks" -storepass "$EUZMAN_STORE_PASSWORD" >/dev/null 2>&1; then
             echo "::error::Keystore cannot be opened. Check EUZMAN_KEYSTORE_BASE64 and EUZMAN_STORE_PASSWORD (file or store password mismatch)."
