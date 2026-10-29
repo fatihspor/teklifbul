@@ -202,9 +202,9 @@ const stateLabel=document.createElement("p");stateLabel.className="tag";stateLab
 if(job.ownerId===ownerId){const actions=document.createElement("div");actions.className="wizard-actions";actions.style.flexWrap="wrap";const action=(label,next)=>{const b=document.createElement("button");b.type="button";b.className="secondary-btn";b.textContent=label;b.onclick=()=>{if(!confirm("İlan durumunu değiştirmek istiyor musunuz?"))return;job.status=next;try{localStorage.setItem(KEY,JSON.stringify(jobs))}catch(e){alert("Değişiklik kaydedilemedi.");return;}render()};actions.append(b)};if(state==="open"){action("İlanı kapat","closed");}if(state==="agreed"){action("İş başladı","progress");action("İlanı yeniden aç","open");}if(state==="progress"){action("İşi tamamla","completed");action("İlanı yeniden aç","open");}if(state==="closed"){action("İlanı yeniden aç","open");}box.append(actions);}if(Array.isArray(job.photos)&&job.photos.length){const gallery=document.createElement("div");gallery.className="job-photos";job.photos.forEach(src=>{if(typeof src==="string"&&src.startsWith("data:image/jpeg;base64,")){const img=document.createElement("img");img.src=src;img.alt="İş fotoğrafı";img.loading="lazy";gallery.append(img);}});box.append(gallery);}box.append(btn);
 const submitted=offers[String(index)]||[];
 const count=document.createElement("p");
-count.textContent="Bu cihazdaki teklifler: "+submitted.length;
+count.textContent="Teklif sayısı: "+submitted.length+(job.ownerId===ownerId?" (tutarlar yalnızca size görünür)":" (tutarlar gizlidir)");
 box.append(count);
-submitted.forEach(o=>{
+submitted.filter(o=>job.ownerId===ownerId).forEach(o=>{
 const item=document.createElement("p");
 item.className="tag";
 item.style.display="block";
