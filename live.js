@@ -17,6 +17,8 @@
       const card = el("div","");
       card.className = "job";
       card.append(el("h3",job.category),el("p","Konum: "+[job.province,job.district,job.neighborhood].join(" / ")),el("p",job.description),el("p","Bütçe: "+(job.budget_note||"Belirtilmedi")));
+      const {data:photos} = await client.from("job_photos").select("storage_path").eq("job_id",job.id).limit(3);
+      if (photos?.length) { const gallery=document.createElement("div");gallery.className="job-photos";for(const photo of photos){const img=document.createElement("img");img.src=client.storage.from("job-photos").getPublicUrl(photo.storage_path).data.publicUrl;img.loading="lazy";img.alt="İş fotoğrafı";gallery.append(img);}card.append(gallery);}
       const {data:{user}} = await client.auth.getUser();
       if (user && job.owner_id === user.id) {
         const own = el("p","Bu ilan size ait. Gelen teklifler yalnızca size görünür.");
@@ -56,10 +58,25 @@
       budget_note:document.getElementById("budget").value.trim()
     };
     if (job.description.length < 10) return alert("İş açıklaması en az 10 karakter olmalı.");
-    const {error} = await client.from("jobs").insert(job);
+    const {data:created,error} = await client.from("jobs").insert(job).select("id").single();
     if (error) return alert("İlan kaydedilemedi. Hesap bilgilerinizi kontrol edin.");
+    const files=[...document.getElementById("photos").files];let uploaded=0;
+    for (const file of files.slice(0,3)) {
+      if (!["image/jpeg","image/png","image/webp"].includes(file.type) || file.size>10*1024*1024) continue;
+      try {
+        const resized=await new Promise((resolve,reject)=>{const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{const c=document.createElement("canvas"),scale=Math.min(1,640/Math.max(img.width,img.height));c.width=Math.max(1,Math.round(img.width*scale));c.height=Math.max(1,Math.round(img.height*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);c.toBlob(blob=>{URL.revokeObjectURL(url);blob?resolve(blob):reject(new Error("Dönüştürme başarısız"))},"image/jpeg",.65)};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("Fotoğraf okunamadı"))};img.src=url;});
+        const path=user.id+"/"+created.id+"/"+crypto.randomUUID()+".jpg";
+        const {error:uploadError}=await client.storage.from("job-photos").upload(path,resized,{contentType:"image/jpeg",upsert:false});
+        if(uploadError)continue;
+        const {error:metaError}=await client.from("job_photos").insert({job_id:created.id,owner_id:user.id,storage_path:path});
+        if(!metaError)uploaded++;
+      }catch(_){}
+    }
     form.reset();
-    alert("İlanınız yayımlandı.");
+    if(typeof selectedPhotos!=="undefined"){selectedPhotos=[];document.getElementById("photoPreview").replaceChildren();}
+    if(typeof updateServices==="function")updateServices();
+    if(typeof showWizardStep==="function")showWizardStep(0);
+    alert("İlanınız yayımlandı."+ (files.length&&uploaded<files.length?" "+(files.length-uploaded)+" fotoğraf yüklenemedi.":""));
     await load();
   },true);
   window.addEventListener("teklifbul:client-ready",async()=>{
