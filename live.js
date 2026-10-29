@@ -25,6 +25,31 @@
         const own = el("p",job.status==="completed"?"İş tamamlandı.":job.status==="awarded"?"Usta seçildi · Teklif alımı kapalı.":"Bu ilan size ait. Gelen teklifler yalnızca size görünür.");
         card.append(own);
         if(job.status==="awarded"){const finish=el("button","İşi tamamlandı olarak onayla");finish.type="button";finish.onclick=async()=>{if(!confirm("İşin tamamlandığını onaylıyor musunuz? Bu işlem ödeme aktarmaz."))return;finish.disabled=true;const {data:ok,error}=await client.rpc("advance_job_status",{p_job_id:job.id,p_next_status:"completed"});if(error||!ok){alert("İş durumu değiştirilemedi.");finish.disabled=false;return;}await load();};card.append(finish);}
+        if(job.status==="completed"){
+          const {data:existingReview}=await client.from("job_reviews").select("rating,comment").eq("job_id",job.id).maybeSingle();
+          if(existingReview){
+            card.append(el("p","Değerlendirmeniz: "+"★".repeat(existingReview.rating)+"☆".repeat(5-existingReview.rating)));
+            if(existingReview.comment)card.append(el("p",existingReview.comment));
+          }else{
+            const reviewForm=document.createElement("form");reviewForm.className="bid-form";
+            reviewForm.append(el("h4","Tamamlanan işi değerlendir"));
+            const ratingLabel=el("label","Puanınız");
+            const rating=document.createElement("select");
+            for(let n=5;n>=1;n--){const opt=document.createElement("option");opt.value=String(n);opt.textContent=n+" yıldız";rating.append(opt);}
+            ratingLabel.append(rating);reviewForm.append(ratingLabel);
+            const commentLabel=el("label","Yorumunuz (isteğe bağlı)");
+            const comment=document.createElement("textarea");comment.maxLength=1000;commentLabel.append(comment);reviewForm.append(commentLabel);
+            const submit=el("button","Değerlendirmeyi gönder");submit.type="submit";reviewForm.append(submit);
+            reviewForm.addEventListener("submit",async e=>{
+              e.preventDefault();submit.disabled=true;
+              const {data:selected,error:selectionError}=await client.from("offers").select("provider_id").eq("id",job.selected_offer_id).single();
+              if(selectionError||!selected){alert("Seçilen usta bulunamadı.");submit.disabled=false;return;}
+              const {error:reviewError}=await client.from("job_reviews").insert({job_id:job.id,customer_id:user.id,provider_id:selected.provider_id,rating:Number(rating.value),comment:comment.value.trim()});
+              if(reviewError){alert("Değerlendirme kaydedilemedi.");submit.disabled=false;return;}
+              await load();
+            });card.append(reviewForm);
+          }
+        }
         const {data:received,error:offerError} = await client.from("offers").select("id,amount,note,created_at,duration_text,material_included,availability,alternative_date").eq("job_id",job.id).order("created_at",{ascending:false});
         if (!offerError) {
           const heading = el("h4", "Gelen teklifleri karşılaştır (" + received.length + ")");
