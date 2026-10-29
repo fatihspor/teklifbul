@@ -50,12 +50,28 @@
             });card.append(reviewForm);
           }
         }
-        const {data:received,error:offerError} = await client.from("offers").select("id,amount,note,created_at,duration_text,material_included,availability,alternative_date").eq("job_id",job.id).order("created_at",{ascending:false});
+        const {data:received,error:offerError} = await client.from("offers").select("id,provider_id,amount,note,created_at,duration_text,material_included,availability,alternative_date").eq("job_id",job.id).order("created_at",{ascending:false});
         if (!offerError) {
           const heading = el("h4", "Gelen teklifleri karşılaştır (" + received.length + ")");
           card.append(heading);
           const comparison = document.createElement("div");
           comparison.className = "offer-comparison";
+          const providerIds=[...new Set(received.map(o=>o.provider_id).filter(Boolean))];
+          const providerStats={};
+          if(providerIds.length){
+            const [{data:reviews,error:reviewsError},{data:profiles}]=await Promise.all([
+              client.from("job_reviews").select("provider_id,rating,comment,created_at").in("provider_id",providerIds).order("created_at",{ascending:false}).limit(300),
+              client.from("profiles").select("id,display_name").in("id",providerIds)
+            ]);
+            (profiles||[]).forEach(p=>{providerStats[p.id]={name:p.display_name||"Hizmet veren",reviews:[],average:null};});
+            if(!reviewsError)(reviews||[]).forEach(review=>{
+              const stat=providerStats[review.provider_id]||(providerStats[review.provider_id]={name:"Hizmet veren",reviews:[],average:null});
+              stat.reviews.push(review);
+            });
+            Object.values(providerStats).forEach(stat=>{
+              if(stat.reviews.length)stat.average=stat.reviews.reduce((sum,v)=>sum+v.rating,0)/stat.reviews.length;
+            });
+          }
           const sorted = [...received].sort((a,b)=>Number(a.amount)-Number(b.amount));
           sorted.forEach((offer,index)=>{
             const item = document.createElement("div");
