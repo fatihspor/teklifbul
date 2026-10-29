@@ -12,6 +12,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.net.Uri;
+import android.content.ActivityNotFoundException;
 
 public class MainActivity extends Activity {
     private WebView webView;
@@ -57,6 +58,13 @@ public class MainActivity extends Activity {
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(false);
+        webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+            } catch (ActivityNotFoundException ignored) {
+                new AlertDialog.Builder(this).setMessage("Dosyayı açacak uygulama bulunamadı.").setPositiveButton("Tamam", null).show();
+            }
+        });
         webView.loadUrl("https://fatihspor.github.io/teklifbul/");
     }
 
