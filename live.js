@@ -76,6 +76,20 @@
           sorted.forEach((offer,index)=>{
             const item = document.createElement("div");
             item.className = "offer-card";
+            const stat=providerStats[offer.provider_id];
+            item.append(el("h4",stat?.name||"Hizmet veren"));
+            item.append(el("p",stat?.reviews.length?("★ "+stat.average.toFixed(1)+"/5 · "+stat.reviews.length+" doğrulanmış değerlendirme"):"Henüz değerlendirilmedi"));
+            if(stat?.reviews.length){
+              const details=document.createElement("details");
+              details.append(el("summary","Müşteri yorumlarını gör"));
+              stat.reviews.slice(0,5).forEach(review=>{
+                const reviewBox=document.createElement("div");reviewBox.className="review-item";
+                reviewBox.append(el("strong","★".repeat(review.rating)+"☆".repeat(5-review.rating)));
+                if(review.comment)reviewBox.append(el("p",review.comment));
+                details.append(reviewBox);
+              });
+              item.append(details);
+            }
             const amount = el("strong", Number(offer.amount).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" TL");
             item.append(amount);
             if(index===0 && sorted.length>1) item.append(el("small","En düşük fiyatlı teklif"));
