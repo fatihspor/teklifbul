@@ -52,3 +52,12 @@ Debug APK yalnızca test içindir. APK üretim adımının varlığı, iş akı�
 5. Google ile giriş/çıkış, farklı cihazlardan erişim, yetkisiz teklif okuma ve yönlendirme testlerini tamamlayın.
 
 **Not:** `auth.js` yalnızca oturum açma arayüzünü hazırlar. İlan/teklif işlemleri hâlâ demo localStorage kullanır; veritabanına geçiş ve canlı yayın ayrıca yapılmalıdır.
+
+## İlan süresi ve ilan sahibi kontrolü (ürün kararı)
+- İlanlar için zorunlu 7/15/30 günlük bitiş süresi yoktur. İlan sahibi kapatana veya bir hizmet vereni seçene kadar ilan açık kalabilir; güvenlik/moderasyon istisnaları saklıdır.
+- İlan sahibi istediği zaman ilanını teklif alımına kapatabilir, hizmet vereni seçebilir veya kimseyi seçmeden iptal edebilir.
+- Durumlar: açık → anlaşıldı → iş devam ediyor → tamamlandı; ayrıca iptal edildi ve yeniden açıldı durumları.
+- Hizmet veren seçildiğinde yeni teklif alımı durur. Diğer teklif sahiplerine yalnızca ilan kapandığı bildirilir; kazanan ve tutar açıklanmaz.
+- Seçilen hizmet veren gelmez veya anlaşma iptal edilirse ilan sahibi ilanı yeniden açabilir.
+- Puan ve yorum yalnızca doğrulanmış tamamlanmış işlerden sonra verilebilir.
+- Gerçek kullanıcıya açılmadan önce bu geçişler sunucu tarafında yetkilendirilip denetlenmelidir; demo cihaz verileri gerçek iş anlaşması sayılmaz.
