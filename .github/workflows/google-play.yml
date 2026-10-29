@@ -2,6 +2,9 @@ name: eUzman Google Play AAB
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/google-play.yml'
 
 permissions:
   contents: read
@@ -35,6 +38,8 @@ jobs:
         run: |
           umask 077
           printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/euzman-release.jks"
+          echo "855f6f1acbf7a486aabb7129251e9fb92fd757caf2b0be6b8a1e9522b502d9ae  $RUNNER_TEMP/euzman-release.jks" | sha256sum --check --status || { echo "::error::Decoded key does not match the original verified eUzman JKS. Recopy the complete EUZMAN_KEYSTORE_BASE64.txt content."; exit 1; }
+          echo "Decoded keystore matches original verified file"
       - name: Validate upload key before build
         env:
           EUZMAN_STORE_PASSWORD: ${{ secrets.EUZMAN_STORE_PASSWORD }}
