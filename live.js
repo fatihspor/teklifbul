@@ -9,7 +9,7 @@
   function message(value) { root.replaceChildren(el("p", value)); }
   async function load() {
     if (!client) return;
-    const {data, error} = await client.from("jobs").select("id,owner_id,category,province,district,neighborhood,description,budget_note,created_at").eq("status","open").order("created_at",{ascending:false}).limit(50);
+    const {data, error} = await client.from("jobs").select("id,owner_id,category,province,district,neighborhood,description,budget_note,preferred_date,preferred_time,alternative_date,work_days,created_at").eq("status","open").order("created_at",{ascending:false}).limit(50);
     if (error) return message("İlanlar yüklenemedi. Lütfen yeniden deneyin.");
     root.replaceChildren();
     if (!data.length) root.append(el("p","Henüz açık ilan yok. İlk ilanı siz oluşturabilirsiniz."));
@@ -17,6 +17,7 @@
       const card = el("div","");
       card.className = "job";
       card.append(el("h3",job.category),el("p","Konum: "+[job.province,job.district,job.neighborhood].join(" / ")),el("p",job.description),el("p","Bütçe: "+(job.budget_note||"Belirtilmedi")));
+      if(job.preferred_date) card.append(el("p","İstenen tarih: "+job.preferred_date+(job.preferred_time?" · "+job.preferred_time:"")+(job.alternative_date?" · Alternatif: "+job.alternative_date:"")+(job.work_days?" · İş süresi: "+job.work_days+" gün":"")));
       const {data:photos} = await client.from("job_photos").select("storage_path").eq("job_id",job.id).limit(3);
       if (photos?.length) { const gallery=document.createElement("div");gallery.className="job-photos";for(const photo of photos){const img=document.createElement("img");img.src=client.storage.from("job-photos").getPublicUrl(photo.storage_path).data.publicUrl;img.loading="lazy";img.alt="İş fotoğrafı";gallery.append(img);}card.append(gallery);}
       const {data:{user}} = await client.auth.getUser();
@@ -118,7 +119,11 @@
       district:document.getElementById("district").selectedOptions[0]?.text||"",
       neighborhood:document.getElementById("neighborhood").value,
       description:document.getElementById("description").value.trim(),
-      budget_note:document.getElementById("budget").value.trim()
+      budget_note:document.getElementById("budget").value.trim(),
+      preferred_date:document.getElementById("preferredDate").value||null,
+      preferred_time:document.getElementById("preferredTime").value||null,
+      alternative_date:document.getElementById("alternativeDate").value||null,
+      work_days:document.getElementById("workDays").value?Number(document.getElementById("workDays").value):null
     };
     if (job.description.length < 10) return alert("İş açıklaması en az 10 karakter olmalı.");
     const {data:created,error} = await client.from("jobs").insert(job).select("id").single();
