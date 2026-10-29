@@ -39,6 +39,14 @@
   [google, apple, phone, button].forEach(b => { b.style.width = "100%"; choices.append(b); });
   button.textContent = "E-posta ile devam et";
   host.append(choices, phoneForm, status);
+  // Native browser redirect works even if the external Supabase JS CDN fails to load.
+  google.onclick = () => {
+    if (!config?.googleOAuthReady) { status.textContent = "Google girişi henüz etkin değil."; return; }
+    const destination = location.origin + location.pathname;
+    const url = config.supabaseUrl + "/auth/v1/authorize?provider=google&redirect_to=" + encodeURIComponent(destination);
+    status.textContent = "Google giriş sayfası açılıyor...";
+    window.location.assign(url);
+  };
   if (!ready) {
     button.disabled = true; google.disabled = true; apple.disabled = true; phone.disabled = true;
     status.textContent = " Giriş ayarları henüz tamamlanmadı.";
@@ -60,7 +68,7 @@
       });
       if (error) status.textContent = "Giriş başlatılamadı. Lütfen tekrar deneyin.";
     }
-    google.onclick = () => oauth("google");
+    // Google uses direct redirect above; no CDN dependency.
     apple.onclick = () => oauth("apple");
     let pendingPhone = "";
     phone.onclick = async () => {
