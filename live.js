@@ -24,7 +24,24 @@
         const own = el("p","Bu ilan size ait. Gelen teklifler yalnızca size görünür.");
         card.append(own);
         const {data:received,error:offerError} = await client.from("offers").select("amount,note,created_at").eq("job_id",job.id).order("created_at",{ascending:false});
-        if (!offerError) received.forEach(o=>card.append(el("p","Gelen teklif: "+o.amount+" TL"+(o.note?" — "+o.note:""))));
+        if (!offerError) {
+          const heading = el("h4", "Gelen teklifleri karşılaştır (" + received.length + ")");
+          card.append(heading);
+          const comparison = document.createElement("div");
+          comparison.className = "offer-comparison";
+          const sorted = [...received].sort((a,b)=>Number(a.amount)-Number(b.amount));
+          sorted.forEach((offer,index)=>{
+            const item = document.createElement("div");
+            item.className = "offer-card";
+            const amount = el("strong", Number(offer.amount).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" TL");
+            item.append(amount);
+            if(index===0 && sorted.length>1) item.append(el("small","En düşük fiyatlı teklif"));
+            if(offer.note) item.append(el("p",offer.note));
+            item.append(el("small","Teklif tarihi: "+new Date(offer.created_at).toLocaleDateString("tr-TR")));
+            comparison.append(item);
+          });
+          card.append(comparison);
+        } else card.append(el("p","Gelen teklifler yüklenemedi."));
       } else if (user) {
         const button = el("button","Gizli teklif ver");
         button.type = "button";
