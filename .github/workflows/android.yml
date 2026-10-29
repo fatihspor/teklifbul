@@ -63,3 +63,16 @@ jobs:
           name: eUzman-v1.4-APK-YENI
           path: app/build/outputs/apk/debug/eUzman-v1.4.apk
           if-no-files-found: error
+
+      - name: Test installation on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            adb install -r app/build/outputs/apk/debug/eUzman-v1.4.apk
+            adb shell pm path com.euzman.app
+            adb shell am start -n com.euzman.app/com.teklifbul.app.MainActivity
+            adb shell pidof com.euzman.app || true
