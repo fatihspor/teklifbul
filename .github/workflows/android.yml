@@ -57,13 +57,6 @@ jobs:
         run: |
           cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/eUzman-v1.4.apk
 
-      - name: Save APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: eUzman-v1.4-APK-YENI
-          path: app/build/outputs/apk/debug/eUzman-v1.4.apk
-          if-no-files-found: error
-
       - name: Test installation on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -72,7 +65,16 @@ jobs:
           profile: pixel_6
           disable-animations: true
           script: |
+            set -e
             adb install -r app/build/outputs/apk/debug/eUzman-v1.4.apk
-            adb shell pm path com.euzman.app
+            adb shell pm path com.euzman.app | grep -F "package:"
             adb shell am start -n com.euzman.app/com.teklifbul.app.MainActivity
-            adb shell pidof com.euzman.app || true
+            sleep 5
+            adb shell pidof com.euzman.app
+
+      - name: Publish APK only after successful emulator install
+        uses: actions/upload-artifact@v4
+        with:
+          name: eUzman-v1.4-ANDROID-TESTED
+          path: app/build/outputs/apk/debug/eUzman-v1.4.apk
+          if-no-files-found: error
