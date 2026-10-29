@@ -47,8 +47,9 @@ public class MainActivity extends Activity {
                     startActivityForResult(params.createIntent(), FILE_REQUEST);
                     return true;
                 } catch (Exception e) {
+                    fileCallback.onReceiveValue(null);
                     fileCallback = null;
-                    return false;
+                    return true;
                 }
             }
         });
@@ -66,6 +67,19 @@ public class MainActivity extends Activity {
             fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data));
             fileCallback = null;
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (fileCallback != null) {
+            fileCallback.onReceiveValue(null);
+            fileCallback = null;
+        }
+        if (webView != null) {
+            webView.destroy();
+            webView = null;
+        }
+        super.onDestroy();
     }
 
     @Override
