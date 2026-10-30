@@ -65,6 +65,10 @@ jobs:
           unzip -t "$APK" | tail -n 2
           unzip -l "$APK"
           unzip -Z1 "$APK" | grep -Fx 'classes.dex'
+          for asset in index.html auth.js live.js config.js; do
+            unzip -Z1 "$APK" | grep -Fx "assets/$asset"
+          done
+          echo "Actual APK size: $(stat -c%s "$APK") bytes"
           "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -v 4 "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep -F 'launchable-activity:'
           ls -lh "$APK"
