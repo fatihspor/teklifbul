@@ -105,14 +105,14 @@ jobs:
             adb wait-for-device
             adb shell getprop ro.build.version.release
             adb shell pm list packages -u
-            adb install -r app/build/outputs/apk/debug/eUzman-v1.5-beta.apk
+            adb shell pm list packages -u | grep -E 'euzman|teklifbul' || true\n            adb install -r app/build/outputs/apk/debug/eUzman-v1.5-beta.apk
             adb shell pm path com.euzman.app
             adb shell am start -n com.euzman.app/com.teklifbul.app.MainActivity
             sleep 8
             adb shell dumpsys activity activities | grep -F "com.euzman.app" || true
             adb shell pidof com.euzman.app || { adb logcat -d -t 250 | grep -Ei "FATAL EXCEPTION|AndroidRuntime|com.euzman.app" | tail -n 80; exit 1; }
 
-      - name: Publish emulator-installed APK
+      - name: Diagnose package identity and signing\n        run: |\n          APK=app/build/outputs/apk/debug/eUzman-v1.5-beta.apk\n          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"\n          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | head -n 12\n          sha256sum "$APK"\n\n      - name: Publish emulator-installed APK
         uses: actions/upload-artifact@v4
         with:
           name: eUzman-v1.5-beta-EMULATOR-TESTED
