@@ -48,6 +48,37 @@ jobs:
           jarsigner -verify "$AAB"
           ls -lh "$AAB"
           sha256sum "$AAB"
+      - name: Verify bundle SDK and package metadata
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          BUNDLETOOL_JAR="$RUNNER_TEMP/bundletool.jar"
+          curl -fsSL --retry 3 -o "$BUNDLETOOL_JAR" https://github.com/google/bundletool/releases/download/1.18.2/bundletool-all-1.18.2.jar
+          java -jar "$BUNDLETOOL_JAR" dump manifest --bundle app/build/outputs/bundle/release/app-release.aab --xpath /manifest/@package | grep -Fx 'com.euzman.app'
+          TARGET="$(java -jar "$BUNDLETOOL_JAR" dump manifest --bundle app/build/outputs/bundle/release/app-release.aab --xpath /manifest/uses-sdk/@android:targetSdkVersion)"
+          echo "Target SDK: $TARGET"
+          test "$TARGET" = "36"
+          echo "BUNDLETOOL_JAR=$BUNDLETOOL_JAR" >> "$GITHUB_ENV"
+      - name: Build and verify installable APK from AAB
+        env:
+          EUZMAN_STORE_PASSWORD: ${{ secrets.EUZMAN_STORE_PASSWORD }}
+          EUZMAN_KEY_ALIAS: ${{ secrets.EUZMAN_KEY_ALIAS }}
+          EUZMAN_KEY_PASSWORD: ${{ secrets.EUZMAN_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          java -jar "$BUNDLETOOL_JAR" build-apks --bundle app/build/outputs/bundle/release/app-release.aab --output "$RUNNER_TEMP/euzman.apks" --mode universal --ks "$EUZMAN_KEYSTORE_PATH" --ks-key-alias "$EUZMAN_KEY_ALIAS" --ks-pass "pass:$EUZMAN_STORE_PASSWORD" --key-pass "pass:$EUZMAN_KEY_PASSWORD"
+          unzip -p "$RUNNER_TEMP/euzman.apks" universal.apk > "$RUNNER_TEMP/eUzman-verified.apk"
+          test "$(stat -c%s "$RUNNER_TEMP/eUzman-verified.apk")" -gt 16384
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$RUNNER_TEMP/eUzman-verified.apk"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$RUNNER_TEMP/eUzman-verified.apk" | grep -E "package:|targetSdkVersion:"
+          cp "$RUNNER_TEMP/eUzman-verified.apk" app/eUzman-verified.apk
+      - name: Upload installable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: eUzman-verified-APK
+          path: app/eUzman-verified.apk
+          if-no-files-found: error
+          retention-days: 14
       - name: Upload Google Play bundle
         uses: actions/upload-artifact@v4
         with:
