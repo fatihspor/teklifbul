@@ -41,3 +41,13 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 }
+
+// Bundle the web application into the APK as a local recovery copy.
+def bundledWebAssets = file("src/main/assets")
+tasks.register('bundleWebApp', Copy) {
+    from(rootProject.projectDir) {
+        include 'index.html', 'auth.js', 'live.js', 'config.js'
+    }
+    into bundledWebAssets
+}
+tasks.named('preBuild').configure { dependsOn tasks.named('bundleWebApp') }
