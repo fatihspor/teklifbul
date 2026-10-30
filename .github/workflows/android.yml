@@ -68,8 +68,8 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -v 4 "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep -F 'launchable-activity:'
           ls -lh "$APK"
-          echo "APK_BYTES=$(stat -c%s \"$APK\")" >> "$GITHUB_STEP_SUMMARY"
-          echo "APK_SHA256=$(sha256sum \"$APK\" | cut -d' ' -f1)" >> "$GITHUB_STEP_SUMMARY"
+          echo "APK_BYTES=$(stat -c%s ${APK})" >> "$GITHUB_STEP_SUMMARY"
+          echo "APK_SHA256=$(sha256sum ${APK} | cut -d\x27 \x27 -f1)" >> "$GITHUB_STEP_SUMMARY"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | head -n 3
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep -F "com.euzman.app"
