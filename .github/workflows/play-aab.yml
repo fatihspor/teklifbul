@@ -1,0 +1,57 @@
+name: eUzman Play AAB
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  play-bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Verify signing credentials exist
+        env:
+          KEYSTORE_B64: ${{ secrets.EUZMAN_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.EUZMAN_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.EUZMAN_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.EUZMAN_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for v in KEYSTORE_B64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!v}" ]; then echo "::error::Missing signing secret: $v"; exit 1; fi
+          done
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/euzman-upload.jks"
+          test -s "$RUNNER_TEMP/euzman-upload.jks"
+          echo "EUZMAN_KEYSTORE_PATH=$RUNNER_TEMP/euzman-upload.jks" >> "$GITHUB_ENV"
+      - name: Build signed release AAB
+        env:
+          EUZMAN_STORE_PASSWORD: ${{ secrets.EUZMAN_STORE_PASSWORD }}
+          EUZMAN_KEY_ALIAS: ${{ secrets.EUZMAN_KEY_ALIAS }}
+          EUZMAN_KEY_PASSWORD: ${{ secrets.EUZMAN_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          gradle :app:bundleRelease
+          AAB=app/build/outputs/bundle/release/app-release.aab
+          test -s "$AAB"
+          test "$(stat -c%s "$AAB")" -gt 8192
+          unzip -t "$AAB" | tail -n 2
+          unzip -Z1 "$AAB" | grep -F 'base/manifest/AndroidManifest.xml'
+          jarsigner -verify "$AAB"
+          ls -lh "$AAB"
+          sha256sum "$AAB"
+      - name: Upload Google Play bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: eUzman-Play-v1.5-beta-AAB
+          path: app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14
