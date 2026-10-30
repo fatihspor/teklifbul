@@ -108,7 +108,9 @@ jobs:
             adb install -r app/build/outputs/apk/debug/eUzman-v1.4.apk
             adb shell pm path com.euzman.app
             adb shell am start -n com.euzman.app/com.teklifbul.app.MainActivity
-            adb shell pidof com.euzman.app
+            sleep 8
+            adb shell dumpsys activity activities | grep -F "com.euzman.app" || true
+            adb shell pidof com.euzman.app || { adb logcat -d -t 250 | grep -Ei "FATAL EXCEPTION|AndroidRuntime|com.euzman.app" | tail -n 80; exit 1; }
 
       - name: Publish emulator-installed APK
         uses: actions/upload-artifact@v4
