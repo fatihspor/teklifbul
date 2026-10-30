@@ -54,7 +54,7 @@
   }
   try {
     const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/+esm");
-    const client = createClient(config.supabaseUrl, config.supabaseAnonKey);
+    const client = createClient(config.supabaseUrl, config.supabaseAnonKey, { auth: { detectSessionInUrl: true, persistSession: true, autoRefreshToken: true, flowType: "implicit" } });
     window.teklifbulSupabase = client;
     async function oauth(provider) {
       if (!config[provider === "google" ? "googleOAuthReady" : "appleOAuthReady"]) {
@@ -118,6 +118,20 @@
       }
     };
     client.auth.onAuthStateChange(() => { void refresh(); });
+    // Wait for Supabase to process OAuth URL fragments before deciding that no user is signed in.
+    const callbackHash = new URLSearchParams(window.location.hash.slice(1));
+    if (callbackHash.has("access_token") && callbackHash.has("refresh_token")) {
+      status.textContent = "Google oturumu tamamlanıyor...";
+      const { error: callbackError } = await client.auth.setSession({
+        access_token: callbackHash.get("access_token"),
+        refresh_token: callbackHash.get("refresh_token")
+      });
+      if (callbackError) {
+        status.textContent = "Google oturumu kaydedilemedi. Tekrar giriş yapın.";
+      } else {
+        history.replaceState(null, "", location.pathname + location.search);
+      }
+    }
     await refresh();
   } catch (e) {
     button.disabled = false;
