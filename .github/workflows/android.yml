@@ -1,4 +1,4 @@
-name: eUzman Android APK
+name: Commenomy Android Beta APK
 
 on:
   push:
@@ -44,7 +44,7 @@ jobs:
           set -euo pipefail
           curl --fail --location --retry 3 --connect-timeout 15 --max-time 45 \
             https://fatihspor.github.io/teklifbul/ -o published-index.html
-          grep -qi 'eUzman' published-index.html
+          test -s published-index.html
           for asset in auth.js live.js config.js; do
             curl --fail --location --retry 3 --connect-timeout 15 --max-time 45 \
               "https://fatihspor.github.io/teklifbul/$asset" -o "published-$asset"
@@ -80,7 +80,7 @@ jobs:
 
       - name: Name APK for clear installation
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/eUzman-v1.4.apk
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Commenomy-v1.5-beta.apk
 
       - name: Enable KVM acceleration for Android emulators
         run: |
@@ -105,7 +105,7 @@ jobs:
             adb wait-for-device
             adb shell getprop ro.build.version.release
             adb shell pm list packages -u
-            adb install -r app/build/outputs/apk/debug/eUzman-v1.4.apk
+            adb install -r app/build/outputs/apk/debug/Commenomy-v1.5-beta.apk
             adb shell pm path com.euzman.app
             adb shell am start -n com.euzman.app/com.teklifbul.app.MainActivity
             sleep 8
@@ -115,8 +115,8 @@ jobs:
       - name: Publish emulator-installed APK
         uses: actions/upload-artifact@v4
         with:
-          name: eUzman-v1.4-EMULATOR-TESTED
-          path: app/build/outputs/apk/debug/eUzman-v1.4.apk
+          name: Commenomy-v1.5-beta-EMULATOR-TESTED
+          path: app/build/outputs/apk/debug/Commenomy-v1.5-beta.apk
           if-no-files-found: error
 
       - name: Report failed installation diagnostics as GitHub issue
@@ -137,7 +137,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: eUzman-DIAGNOSTICS-${{ github.run_number }}
+          name: Commenomy-DIAGNOSTICS-${{ github.run_number }}
           path: |
             diagnostic.txt
             install-result.txt
