@@ -92,6 +92,13 @@ jobs:
             exit 1
           fi
 
+      - name: Verify clean installation and APK signing metadata
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/debug/eUzman-v1.5-beta.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep -E "package:|sdkVersion:|targetSdkVersion:|launchable-activity:"
+          echo "Note: a locally installed APK signed with a different certificate cannot be upgraded in place."
       - name: Test installation on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -106,7 +113,8 @@ jobs:
             adb shell getprop ro.build.version.release
             adb shell pm list packages -u
             adb shell pm list packages -u | grep -E 'euzman|teklifbul' || true
-            adb install -r app/build/outputs/apk/debug/eUzman-v1.5-beta.apk
+            adb uninstall com.euzman.app || true
+            adb install app/build/outputs/apk/debug/eUzman-v1.5-beta.apk
             adb shell pm path com.euzman.app
             adb shell am start -n com.euzman.app/com.teklifbul.app.MainActivity
             sleep 8
